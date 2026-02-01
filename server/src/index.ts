@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import helmet from 'helmet';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import agentRoutes from '../routes/agent.js';
@@ -11,13 +12,29 @@ import materialOrderRoutes from '../routes/material-orders.js';
 import studentRoutes from '../routes/students-advanced.js';
 import financeRoutes from '../routes/finance.js';
 import n8nRoutes from '../routes/n8n-conversas.js';
+import { generalLimiter, loginLimiter, writeLimiter } from '../middleware/rate-limit.middleware.js';
+import { errorHandler, notFoundHandler } from '../middleware/error-handler.middleware.js';
 
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+// ==========================================
+// MIDDLEWARES DE SEGURANÇA
+// ==========================================
+app.use(helmet());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true,
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(morgan('combined'));
+
+// ==========================================
+// RATE LIMITING
+// ==========================================
+app.use(generalLimiter);
+app.use(writeLimiter);
 
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -27,7 +44,12 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // ==========================================
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', system: 'CONEXA v1.1', timestamp: new Date() });
+  res.json({ 
+    status: 'OK', 
+    system: 'CONEXA v1.1', 
+    timestamp: new Date(),
+    uptime: process.uptime(),
+  });
 });
 
 // ==========================================
@@ -121,12 +143,18 @@ app.put('/api/inventory/:id', async (req, res) => {
 });
 
 // ==========================================
+// TRATAMENTO DE ERROS
+// ==========================================
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// ==========================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==========================================
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 CONEXA Server v1.1 rodando na porta ${PORT}`);
+const PORT = process.env.PORT || 3001;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 CONEXA Server v1.1 rodando na porta ${PORT}`);
   console.log(`📊 Endpoints disponíveis:`);
   console.log(`   - /api/health          (Health Check)`);
   console.log(`   - /api/agent           (Agente de IA)`);
@@ -135,6 +163,17 @@ app.listen(PORT, () => {
   console.log(`   - /api/documents       (Documentos)`);
   console.log(`   - /api/procurement     (Compras)`);
   console.log(`   - /api/material-orders (Pedidos)`);
-  console.log(`   - /api/finance         (Financeiro) [NEW]`);
-  console.log(`   - /api/n8n             (WhatsApp/N8N) [NEW]`);
+  console.log(`   - /api/finance         (Financeiro)`);
+  console.log(`   - /api/n8n             (WhatsApp/N8N)`);
+  console.log(`\n✅ Sistema pronto para receber requisições\n`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM recebido, encerrando gracefully...');
+  server.close(() => {
+    console.log('Servidor encerrado');
+    prisma.$disconnect();
+    process.exit(0);
+  });
 });

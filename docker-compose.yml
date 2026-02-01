@@ -61,6 +61,8 @@ services:
       ENABLE_STOCK_PREDICTION: "true"
       ENABLE_PDF_GENERATION: "true"
       ENABLE_CRON_JOBS: "false"
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 100
     volumes:
       - ./server:/app/server
       - ./prisma:/app/prisma
