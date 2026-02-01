@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "rootDir": "./",
+    "outDir": "./dist",
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*", "routes/**/*", "services/**/*", "middleware/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

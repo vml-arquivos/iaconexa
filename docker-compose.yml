@@ -1,0 +1,105 @@
+# ========================================
+# SISTEMA CONEXA v1.0
+# Docker Compose - Development Environment
+# ========================================
+
+version: '3.8'
+
+services:
+  # ========================================
+  # SERVICE 1: DATABASE (PostgreSQL 15)
+  # ========================================
+  db:
+    image: postgres:15-alpine
+    container_name: conexa_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-conexa_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-conexa_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-conexa_dev}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      - ./infra/scripts/backup:/backups
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-conexa_admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - conexa_network
+
+  # ========================================
+  # SERVICE 2: BACKEND (Node.js/Express)
+  # ========================================
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    container_name: conexa_backend_dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-conexa_admin}:${POSTGRES_PASSWORD:-conexa_dev_password}@db:5432/${POSTGRES_DB:-conexa_dev}?schema=public
+      PORT: 3001
+      API_URL: http://localhost:3001
+      FRONTEND_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_me_in_production}
+      SESSION_SECRET: ${SESSION_SECRET:-dev_session_secret}
+      BCRYPT_ROUNDS: 10
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: gpt-4
+      LOG_LEVEL: debug
+      ENABLE_AI_MENTOR: "true"
+      ENABLE_STOCK_PREDICTION: "true"
+      ENABLE_PDF_GENERATION: "true"
+      ENABLE_CRON_JOBS: "false"
+    volumes:
+      - ./server:/app/server
+      - ./prisma:/app/prisma
+      - ./shared:/app/shared
+      - /app/node_modules
+      - /app/server/node_modules
+    ports:
+      - "3001:3001"
+    networks:
+      - conexa_network
+    command: npm run dev
+
+  # ========================================
+  # SERVICE 3: FRONTEND (React/Vite)
+  # ========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.frontend
+    container_name: conexa_frontend_dev
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3001
+      VITE_APP_NAME: Conexa
+    volumes:
+      - ./client:/app/client
+      - ./shared:/app/shared
+      - /app/node_modules
+      - /app/client/node_modules
+    ports:
+      - "5173:5173"
+    networks:
+      - conexa_network
+    command: npm run dev
+
+volumes:
+  pgdata_dev:
+    driver: local
+
+networks:
+  conexa_network:
+    driver: bridge

@@ -1,0 +1,423 @@
+// ==========================================
+// PRISMA SCHEMA - CONEXA (FINAL PRODUCTION)
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  MATRIZ_ADMIN
+  MATRIZ_COORD
+  MATRIZ_NUTRI
+  MATRIZ_PSYCHO
+  UNIT_DIRECTOR
+  UNIT_COORD
+  UNIT_SECRETARY
+  UNIT_NUTRI
+  TEACHER
+  SUPPORT_STAFF
+}
+
+enum InventoryCategory {
+  FOOD
+  HYGIENE
+  CLEANING
+  PEDAGOGICAL
+  OFFICE
+  UTILITY
+  MEDICINE
+  DIGNITY_CRITICAL
+}
+
+enum StockAlertLevel {
+  NONE
+  LOW
+  CRITICAL
+  EXCESS
+  OK
+  EMERGENCY
+}
+
+enum DocumentType {
+  RG
+  CPF
+  BIRTH_CERTIFICATE
+  VACCINATION_CARD
+  RESIDENCE_PROOF
+  MEDICAL_REPORT
+  TRANSFER_LETTER
+  OTHER
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  PARTIALLY_FULFILLED
+  FULFILLED
+  CANCELLED
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model Association {
+  id          String   @id @default(uuid())
+  name        String
+  cnpj        String?  @unique
+  address     String?
+  phone       String?
+  email       String?
+  schools     School[]
+  menus       Menu[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model School {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  address     String?
+  phone       String?
+  email       String?
+  associationId String
+  association Association @relation(fields: [associationId], references: [id])
+  users       User[]
+  classes     Class[]
+  inventory   InventoryItem[]
+  menus       Menu[]
+  auditLogs   AuditLog[]
+  procurementOrders ProcurementOrder[]
+  employees   Employee[]
+  suppliers   Supplier[]
+  students    Student[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  passwordHash String
+  cpf         String?
+  phone       String?
+  role        UserRole @default(TEACHER)
+  isActive    Boolean  @default(true)
+  schoolId    String?
+  school      School?  @relation(fields: [schoolId], references: [id])
+  classId     String?
+  class       Class?   @relation(fields: [classId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  auditLogs   AuditLog[]
+}
+
+model Employee {
+  id          String   @id @default(uuid())
+  name        String
+  cpf         String?
+  email       String?
+  phone       String?
+  role        UserRole
+  status      String   @default("ACTIVE")
+  department  String?  // Fix: Required by employees-advanced.ts
+  category    String?
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  documents   Document[]
+  hireDate    DateTime?
+  active      Boolean  @default(true)
+  salary      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Class {
+  id          String   @id @default(uuid())
+  name        String
+  level       String?  // Fix: Required by material-orders.ts
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  year        Int      @default(2025)
+  capacity    Int?
+  teachers    User[]
+  students    Student[]
+  plannings   BNCCPlanning[]
+  materialList MaterialList[]
+  procurementOrders ProcurementOrder[] // Relation to ProcurementOrder
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  name        String
+  birthDate   DateTime
+  cpf         String?
+  email       String?
+  enrollmentId String?
+  
+  schoolId    String?  // Fix: Required by agent.ts
+  school      School?  @relation(fields: [schoolId], references: [id])
+  
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id])
+  
+  healthData  Json?
+  guardians   Json?
+  profileData Json?
+  
+  status      String   @default("ACTIVE")
+  
+  dailyLogs   DailyLog[]
+  psychRecords PsychologicalRecord[]
+  documents   Document[]
+  attendance  Attendance[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  date      DateTime
+  present   Boolean
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id          String       @id @default(uuid())
+  title       String
+  filename    String?
+  fileSize    Int?         // Fix: Required by documents.ts
+  type        DocumentType
+  url         String
+  fileKey     String?
+  
+  studentId   String?
+  student     Student?     @relation(fields: [studentId], references: [id])
+  
+  employeeId  String?
+  employee    Employee?    @relation(fields: [employeeId], references: [id])
+  
+  expiryDate  DateTime?
+  verified    Boolean      @default(false)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model InventoryItem {
+  id                  String            @id @default(uuid())
+  name                String
+  sku                 String?
+  category            InventoryCategory
+  quantity            Float
+  unit                String
+  minThreshold        Float
+  avgDailyConsumption Float             @default(0)
+  daysRemaining       Float             @default(0)
+  lastPrice           Float?
+  
+  alertLevel          StockAlertLevel   @default(NONE)
+  lastAlertSent       DateTime?
+  lastUpdated         DateTime?
+  
+  schoolId            String
+  school              School            @relation(fields: [schoolId], references: [id])
+  
+  consumptionLogs     ConsumptionLog[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+model ConsumptionLog {
+  id          String        @id @default(uuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  quantity    Float
+  reason      String?
+  date        DateTime      @default(now())
+  userId      String?
+}
+
+model ProcurementOrder {
+  id          String      @id @default(uuid())
+  orderNumber String?
+  schoolId    String
+  school      School      @relation(fields: [schoolId], references: [id])
+  
+  classId     String?     // Fix: Required by material-orders.ts
+  class       Class?      @relation(fields: [classId], references: [id])
+
+  status      OrderStatus @default(DRAFT)
+  totalValue  Float?
+  
+  items       ProcurementOrderItem[]
+  
+  requestedBy String?
+  approvedBy  String?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model ProcurementOrderItem {
+  id          String           @id @default(uuid())
+  orderId     String
+  order       ProcurementOrder @relation(fields: [orderId], references: [id])
+  name        String
+  quantity    Float
+  unitPrice   Float?
+  totalPrice  Float?
+  sku         String?
+}
+
+model Supplier {
+  id          String            @id @default(uuid())
+  name        String
+  cnpj        String?
+  email       String?
+  phone       String?
+  address     String?           // Fix: Required by material-orders.ts
+  website     String?
+  
+  schoolId    String?
+  school      School?           @relation(fields: [schoolId], references: [id])
+
+  products    SupplierProduct[]
+  priceLists  SupplierPriceList[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model SupplierProduct {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  name        String
+  sku         String?
+  price       Float
+  unit        String
+  category    String?
+  updatedAt   DateTime @updatedAt
+  
+  // Compound unique constraint to fix "supplierId_sku" error
+  @@unique([supplierId, sku]) 
+}
+
+model SupplierPriceList {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  name        String
+  validFrom   DateTime? // Fix: Required by material-orders.ts
+  validUntil  DateTime?
+  fileUrl     String?
+  xmlData     String?
+  createdAt   DateTime @default(now())
+}
+
+model MaterialList {
+  id          String             @id @default(uuid())
+  classId     String             @unique // Fix: Added unique constraint for findUnique query
+  class       Class              @relation(fields: [classId], references: [id])
+  schoolId    String?
+  name        String
+  items       MaterialListItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model MaterialListItem {
+  id             String       @id @default(uuid())
+  listId         String
+  materialList   MaterialList @relation(fields: [listId], references: [id])
+  name           String
+  description    String?      // Fix: Required by material-orders.ts
+  category       String?
+  quantity       Float
+  unit           String
+  purchased      Boolean      @default(false)
+}
+
+model Menu {
+  id          String   @id @default(uuid())
+  name        String
+  weekNumber  Int
+  year        Int
+  meals       Json
+  schoolId    String?
+  school      School?  @relation(fields: [schoolId], references: [id])
+  associationId String?
+  association Association? @relation(fields: [associationId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model DailyLog {
+  id             String   @id @default(uuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  date           DateTime @default(now())
+  sleep          Boolean  @default(false)
+  sleepTime      String?
+  foodAcceptance String
+  evacuation     String?
+  notes          String?
+  createdAt      DateTime @default(now())
+}
+
+model PsychologicalRecord {
+  id             String   @id @default(uuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id])
+  psychologistId String
+  observation    String   @db.Text
+  isConfidential Boolean  @default(true)
+  tags           String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model BNCCPlanning {
+  id          String   @id @default(uuid())
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id])
+  date        DateTime
+  theme       String
+  bnccCodes   String[]
+  activities  String   @db.Text
+  resources   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  resource    String
+  details     String?
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  schoolId    String?
+  school      School?  @relation(fields: [schoolId], references: [id])
+  createdAt   DateTime @default(now())
+}
