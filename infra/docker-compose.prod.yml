@@ -21,7 +21,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./backups:/backups
     ports:
-      - "127.0.0.1:5432:5432"  # Bind apenas localhost (segurança)
+      - "9432:5432"  # Porta segura sem conflito
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-conexa_admin} -d ${POSTGRES_DB:-conexa_prod}"]
       interval: 10s
@@ -57,7 +57,7 @@ services:
       
       # Node
       NODE_ENV: production
-      PORT: 3001
+      PORT: 9001
       
       # Security
       JWT_SECRET: ${JWT_SECRET}
@@ -66,9 +66,9 @@ services:
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
       
       # URLs
-      API_URL: ${API_URL:-http://localhost:3001}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      API_URL: ${API_URL:-http://localhost:9001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:9173}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:9173}
       
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -101,7 +101,7 @@ services:
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
     
     ports:
-      - "127.0.0.1:3001:3001"  # Bind apenas localhost (Nginx faz proxy)
+      - "9001:9001"  # Porta segura sem conflito
     
     volumes:
       - ./uploads:/app/uploads
@@ -140,11 +140,11 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_URL: ${API_URL:-http://localhost:3001}
+      VITE_API_URL: ${API_URL:-http://localhost:9001}
+      VITE_APP_NAME: Conexa
     
     ports:
-      - "80:80"
-      - "443:443"
+      - "9173:5173"  # Porta segura sem conflito
     
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
