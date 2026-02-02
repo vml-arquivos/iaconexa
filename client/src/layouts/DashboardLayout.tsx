@@ -85,8 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       { icon: CalendarCheck, label: "Agenda", href: "/dashboard/agenda-atendimentos" },
     ] : []),
     ...(unitSettings.moduloSuprimentos ? [
-      { icon: Package, label: "Solicitar Materiais", href: "/dashboard/solicitar-materiais" },
-      { icon: CheckSquare, label: "Aprovar Materiais", href: "/dashboard/aprovar-materiais" },
+      { icon: Package, label: "Pedidos de Materiais", href: "/dashboard/pedidos-materiais" },
     ] : []),
     { icon: Zap, label: "Automação (Demo)", href: "/dashboard/automacao" },
   ];
