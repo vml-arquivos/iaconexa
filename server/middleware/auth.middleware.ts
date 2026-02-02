@@ -22,7 +22,9 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       id: decoded.id,
       email: decoded.email,
       role: decoded.role,
-    };
+      schoolId: decoded.schoolId,
+      classId: decoded.classId,
+    } as any;
 
     next();
   } catch (error) {
