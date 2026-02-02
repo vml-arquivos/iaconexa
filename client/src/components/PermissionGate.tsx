@@ -11,12 +11,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 
 // User Role Types (matching backend)
 type UserRole = 
-  | 'ADMIN_MATRIZ'
-  | 'GESTOR_REDE'
+  | 'MATRIZ_ADMIN'
+  | 'COORDENADOR_GERAL'
   | 'DIRETOR_UNIDADE'
-  | 'COORD_PEDAGOGICO'
-  | 'SECRETARIA'
+  | 'COORDENADOR_PEDAGOGICO'
+  | 'SECRETARIO'
   | 'NUTRICIONISTA'
+  | 'PSICOLOGO'
   | 'PROFESSOR';
 
 // Resource Types
@@ -46,14 +47,14 @@ interface PermissionGateProps {
   tooltipMessage?: string;
 }
 
-// Strategic Roles (View-Only Global)
-const STRATEGIC_ROLES: UserRole[] = ['ADMIN_MATRIZ', 'GESTOR_REDE'];
+// Strategic Roles (Full Access - God Mode)
+const STRATEGIC_ROLES: UserRole[] = ['MATRIZ_ADMIN', 'COORDENADOR_GERAL'];
 
 // Tactical Roles (Local Authority)
-const TACTICAL_ROLES: UserRole[] = ['DIRETOR_UNIDADE', 'COORD_PEDAGOGICO', 'SECRETARIA'];
+const TACTICAL_ROLES: UserRole[] = ['DIRETOR_UNIDADE', 'COORDENADOR_PEDAGOGICO', 'SECRETARIO'];
 
 // Operational Roles (Execution)
-const OPERATIONAL_ROLES: UserRole[] = ['NUTRICIONISTA', 'PROFESSOR'];
+const OPERATIONAL_ROLES: UserRole[] = ['NUTRICIONISTA', 'PSICOLOGO', 'PROFESSOR'];
 
 /**
  * Check if user has permission
@@ -71,40 +72,12 @@ function checkPermission(
   }
 
   // ========================================
-  // STRATEGIC ROLES (Global View-Only)
+  // STRATEGIC ROLES (God Mode - Full Access)
   // ========================================
   if (STRATEGIC_ROLES.includes(userRole)) {
-    // READ: Allow access to EVERYTHING
-    if (action === 'read') {
-      return { allowed: true };
-    }
-
-    // WRITE/DELETE: DENY for operational resources
-    const operationalResources: ResourceType[] = [
-      'daily-log',
-      'student',
-      'class',
-      'appointment',
-      'material-request',
-      'planning'
-    ];
-
-    if (operationalResources.includes(resource)) {
-      return { 
-        allowed: false, 
-        reason: 'Apenas a unidade pode editar este dado' 
-      };
-    }
-
-    // EXCEPTION: Can edit unit-settings and create units
-    if (resource === 'unit-settings' || resource === 'unit') {
-      return { allowed: true };
-    }
-
-    return { 
-      allowed: false, 
-      reason: 'Permissão negada para nível estratégico' 
-    };
+    // MATRIZ_ADMIN and COORDENADOR_GERAL have FULL ACCESS to everything
+    // No restrictions on read, write, or delete
+    return { allowed: true };
   }
 
   // ========================================

@@ -33,6 +33,7 @@ interface UnitSettings {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [unitSettings, setUnitSettings] = useState<UnitSettings>({
     moduloPedagogico: true,
     moduloDiario: true,
@@ -41,10 +42,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     moduloSuprimentos: true,
   });
 
-  // Carregar configurações da unidade
+  // Carregar role do usuário e configurações da unidade
   useEffect(() => {
+    loadUserRole();
     loadUnitSettings();
   }, []);
+
+  const loadUserRole = async () => {
+    try {
+      // Tentar carregar do localStorage primeiro
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setUserRole(user.role);
+        return;
+      }
+      
+      // Se não houver no localStorage, tentar da API
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const user = await response.json();
+        setUserRole(user.role);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar role do usuário:', error);
+    }
+  };
 
   const loadUnitSettings = async () => {
     try {
@@ -71,31 +94,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: LayoutDashboard, label: "Visão Geral", href: "/dashboard" },
   ];
 
-  // Menu items condicionais baseados em feature flags
+  // God Mode: MATRIZ_ADMIN e COORDENADOR_GERAL veem TUDO
+  const isGodMode = userRole === 'MATRIZ_ADMIN' || userRole === 'COORDENADOR_GERAL';
+  
+  // Menu items condicionais baseados em feature flags (ou God Mode)
   const conditionalMenuItems = [
-    ...(unitSettings.moduloPedagogico ? [
+    ...((unitSettings.moduloPedagogico || isGodMode) ? [
       { icon: BookOpen, label: "Planejamentos", href: "/dashboard/planejamentos" },
       { icon: CheckSquare, label: "Tarefas", href: "/dashboard/tarefas" },
       { icon: GraduationCap, label: "Turmas", href: "/dashboard/turmas" },
     ] : []),
-    ...(unitSettings.moduloDiario ? [
+    ...((unitSettings.moduloDiario || isGodMode) ? [
       { icon: FileText, label: "Diário de Bordo", href: "/dashboard/diario-rapido" },
       { icon: ClipboardList, label: "Diário Digital", href: "/dashboard/diario-digital" },
       { icon: ClipboardList, label: "Diário de Classe", href: "/dashboard/diario-classe" },
       { icon: CalendarCheck, label: "Agenda", href: "/dashboard/agenda-atendimentos" },
     ] : []),
-    ...(unitSettings.moduloSuprimentos ? [
+    ...((unitSettings.moduloSuprimentos || isGodMode) ? [
       { icon: Package, label: "Pedidos de Materiais", href: "/dashboard/pedidos-materiais" },
     ] : []),
     { icon: Zap, label: "Automação (Demo)", href: "/dashboard/automacao" },
   ];
 
-  // Menu items administrativos (CRM e Financeiro)
+  // Menu items administrativos (CRM e Financeiro) - God Mode sempre vê
   const adminMenuItems = [
-    ...(unitSettings.moduloCRM ? [
+    ...((unitSettings.moduloCRM || isGodMode) ? [
       { icon: UserCircle, label: "CRM 360º", href: "/admin/clients" },
     ] : []),
-    ...(unitSettings.moduloFinanceiro ? [
+    ...((unitSettings.moduloFinanceiro || isGodMode) ? [
       { icon: DollarSign, label: "Financeiro", href: "/admin/financeiro" },
     ] : []),
   ];
