@@ -64,7 +64,7 @@ router.get('/employees', async (req: Request, res: Response) => {
  * Create new employee (user)
  * Rule: Prevent DIRETOR from creating ADMIN_MATRIZ
  */
-router.post('/employees', rbacMiddleware('employee' as any, 'write' as any), async (req: Request, res: Response) => {
+router.post('/employees', rbacMiddleware('employee' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const { name, email, cpf, phone, role, password, unitId } = req.body;
@@ -128,7 +128,7 @@ router.post('/employees', rbacMiddleware('employee' as any, 'write' as any), asy
  * PUT /api/employees/:id
  * Update employee information
  */
-router.put('/employees/:id', rbacMiddleware('employee' as any, 'write' as any), async (req: Request, res: Response) => {
+router.put('/employees/:id', rbacMiddleware('employee' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = (req as any).user;
@@ -183,7 +183,7 @@ router.put('/employees/:id', rbacMiddleware('employee' as any, 'write' as any), 
  * DELETE /api/employees/:id
  * Deactivate employee (soft delete)
  */
-router.delete('/employees/:id', rbacMiddleware('employee' as any, 'write' as any), async (req: Request, res: Response) => {
+router.delete('/employees/:id', rbacMiddleware('employee' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -213,7 +213,7 @@ router.delete('/employees/:id', rbacMiddleware('employee' as any, 'write' as any
  * POST /api/students
  * Create student with health profile in single payload
  */
-router.post('/students', rbacMiddleware('student', 'write'), async (req: Request, res: Response) => {
+router.post('/students', rbacMiddleware('student', 'WRITE'), async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const { 
@@ -288,7 +288,7 @@ router.post('/students', rbacMiddleware('student', 'write'), async (req: Request
  * PUT /api/students/:id/health
  * Update student health profile
  */
-router.put('/students/:id/health', rbacMiddleware('student', 'write'), async (req: Request, res: Response) => {
+router.put('/students/:id/health', rbacMiddleware('student', 'WRITE'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { 
@@ -380,7 +380,7 @@ router.get('/students/:id/health', async (req: Request, res: Response) => {
  * POST /api/observations
  * Create new observation
  */
-router.post('/observations', rbacMiddleware('observation' as any, 'write' as any), async (req: Request, res: Response) => {
+router.post('/observations', rbacMiddleware('observation' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
     const { studentId, type, title, description, isPrivate } = req.body;
@@ -468,7 +468,7 @@ router.get('/observations/student/:id', async (req: Request, res: Response) => {
  * PUT /api/observations/:id
  * Update observation
  */
-router.put('/observations/:id', rbacMiddleware('observation' as any, 'write' as any), async (req: Request, res: Response) => {
+router.put('/observations/:id', rbacMiddleware('observation' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = (req as any).user;
@@ -516,7 +516,7 @@ router.put('/observations/:id', rbacMiddleware('observation' as any, 'write' as 
  * DELETE /api/observations/:id
  * Delete observation
  */
-router.delete('/observations/:id', rbacMiddleware('observation' as any, 'write' as any), async (req: Request, res: Response) => {
+router.delete('/observations/:id', rbacMiddleware('observation' as any, 'WRITE' as any), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const user = (req as any).user;
