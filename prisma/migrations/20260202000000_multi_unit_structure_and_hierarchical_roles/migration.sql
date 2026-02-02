@@ -5,8 +5,24 @@ CREATE TYPE "UnitType" AS ENUM ('MATRIZ', 'UNIDADE');
 BEGIN;
 CREATE TYPE "UserRole_new" AS ENUM ('MATRIZ_ADMIN', 'COORDENADOR_GERAL', 'DIRETOR_UNIDADE', 'COORDENADOR_PEDAGOGICO', 'PROFESSOR', 'NUTRICIONISTA', 'PSICOLOGO', 'SECRETARIO');
 ALTER TABLE "User" ALTER COLUMN "role" DROP DEFAULT;
-ALTER TABLE "User" ALTER COLUMN "role" TYPE "UserRole_new" USING ("role"::text::"UserRole_new");
-ALTER TABLE "Employee" ALTER COLUMN "role" TYPE "UserRole_new" USING ("role"::text::"UserRole_new");
+-- Fix: Map legacy roles to new roles manually to prevent casting errors
+ALTER TABLE "User" ALTER COLUMN "role" TYPE "UserRole_new" USING (
+  CASE 
+    WHEN "role"::text = 'MATRIZ_NUTRI' THEN 'NUTRICIONISTA'::text
+    WHEN "role"::text = 'MATRIZ_ADMIN' THEN 'MATRIZ_ADMIN'::text
+    WHEN "role"::text = 'SECRETARIO' THEN 'SECRETARIO'::text
+    ELSE "role"::text
+  END
+)::"UserRole_new";
+
+ALTER TABLE "Employee" ALTER COLUMN "role" TYPE "UserRole_new" USING (
+  CASE 
+    WHEN "role"::text = 'MATRIZ_NUTRI' THEN 'NUTRICIONISTA'::text
+    WHEN "role"::text = 'MATRIZ_ADMIN' THEN 'MATRIZ_ADMIN'::text
+    WHEN "role"::text = 'SECRETARIO' THEN 'SECRETARIO'::text
+    ELSE "role"::text
+  END
+)::"UserRole_new";
 ALTER TYPE "UserRole" RENAME TO "UserRole_old";
 ALTER TYPE "UserRole_new" RENAME TO "UserRole";
 DROP TYPE "UserRole_old";
