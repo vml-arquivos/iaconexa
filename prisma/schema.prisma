@@ -155,6 +155,13 @@ enum MaterialCategory {
   PEDAGOGICO
 }
 
+enum ObservationType {
+  BEHAVIORAL      // Comportamental (Agressividade, Isolamento)
+  LEARNING        // Pedagógico
+  PHYSICAL        // Motor/Físico
+  SOCIAL          // Interação
+}
+
 enum RequestStatus {
   PENDING
   APPROVED
@@ -252,6 +259,7 @@ model User {
   updatedAt        DateTime @updatedAt
   auditLogs        AuditLog[]
   materialRequests MaterialRequest[]
+  observations     StudentObservation[]
 }
 
 model Employee {
@@ -320,6 +328,8 @@ model Student {
   documents   Document[]
   attendance  Attendance[]
   appointments Appointment[]
+  healthProfile StudentHealthProfile?
+  observations StudentObservation[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -650,4 +660,54 @@ model MaterialRequest {
   @@index([userId])
   @@index([status])
   @@index([requestedAt])
+}
+
+
+// ==========================================
+// SECRETARIA 360º E NÚCLEO DE SAÚDE/INCLUSÃO
+// ==========================================
+
+model StudentHealthProfile {
+  id                  String   @id @default(uuid())
+  studentId           String   @unique
+  bloodType           String?  // ex: "A+", "O-"
+  hasAllergy          Boolean  @default(false)
+  allergyDetails      String?  @db.Text // ex: "Amendoim, Leite, Picada de Abelha"
+  dietaryRestrictions String?  @db.Text // ex: "Vegano, Sem Glúten"
+  hasSpecialNeeds     Boolean  @default(false) // Possui Laudo?
+  medicalReport       String?  @db.Text // Detalhes do CID/Diagnóstico
+  medications         String?  @db.Text // Medicamento contínuo (ex: Insulina)
+  emergencyContact    String?  // Nome e Telefone (Pai/Mãe)
+  susNumber           String?  // Cartão SUS
+  
+  student             Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@index([studentId])
+  @@index([hasAllergy])
+  @@index([hasSpecialNeeds])
+}
+
+model StudentObservation {
+  id          String           @id @default(uuid())
+  studentId   String
+  authorId    String           // Quem relatou
+  date        DateTime         @default(now())
+  type        ObservationType
+  title       String
+  description String           @db.Text
+  isPrivate   Boolean          @default(false) // Se true, apenas Psicóloga/Direção vê
+  
+  student     Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  author      User             @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@index([studentId, date])
+  @@index([authorId])
+  @@index([type])
+  @@index([isPrivate])
 }
