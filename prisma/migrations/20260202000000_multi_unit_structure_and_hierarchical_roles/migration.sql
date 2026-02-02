@@ -5,12 +5,13 @@ CREATE TYPE "UnitType" AS ENUM ('MATRIZ', 'UNIDADE');
 BEGIN;
 CREATE TYPE "UserRole_new" AS ENUM ('MATRIZ_ADMIN', 'COORDENADOR_GERAL', 'DIRETOR_UNIDADE', 'COORDENADOR_PEDAGOGICO', 'PROFESSOR', 'NUTRICIONISTA', 'PSICOLOGO', 'SECRETARIO');
 ALTER TABLE "User" ALTER COLUMN "role" DROP DEFAULT;
--- Fix: Map legacy roles to new roles manually to prevent casting errors
+-- Fix: Mapeamento seguro de roles antigas para novas (evita crash)
 ALTER TABLE "User" ALTER COLUMN "role" TYPE "UserRole_new" USING (
   CASE 
     WHEN "role"::text = 'MATRIZ_NUTRI' THEN 'NUTRICIONISTA'::text
     WHEN "role"::text = 'MATRIZ_ADMIN' THEN 'MATRIZ_ADMIN'::text
     WHEN "role"::text = 'SECRETARIO' THEN 'SECRETARIO'::text
+    WHEN "role"::text = 'COORDENADOR_GERAL' THEN 'COORDENADOR_GERAL'::text
     ELSE "role"::text
   END
 )::"UserRole_new";
@@ -20,6 +21,7 @@ ALTER TABLE "Employee" ALTER COLUMN "role" TYPE "UserRole_new" USING (
     WHEN "role"::text = 'MATRIZ_NUTRI' THEN 'NUTRICIONISTA'::text
     WHEN "role"::text = 'MATRIZ_ADMIN' THEN 'MATRIZ_ADMIN'::text
     WHEN "role"::text = 'SECRETARIO' THEN 'SECRETARIO'::text
+    WHEN "role"::text = 'COORDENADOR_GERAL' THEN 'COORDENADOR_GERAL'::text
     ELSE "role"::text
   END
 )::"UserRole_new";

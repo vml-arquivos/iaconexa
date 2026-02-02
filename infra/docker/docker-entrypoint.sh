@@ -47,6 +47,12 @@ echo "✅ PostgreSQL está pronto!"
 # ========================================
 echo "🗄️ Executando migrations..."
 cd /app
+
+# Auto-Heal: Destravar migration presa (se houver)
+echo "🚑 [AUTO-HEAL] Tentando destravar migração presa..."
+# Tenta marcar a migração problemática como 'revertida' para tentar de novo
+pnpm exec prisma migrate resolve --rolled-back "20260202000000_multi_unit_structure_and_hierarchical_roles" || true
+
 pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma
 
 if [ $? -ne 0 ]; then
