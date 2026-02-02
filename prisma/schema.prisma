@@ -20,18 +20,19 @@ datasource db {
 // Nível Tático: Autoridade local
 // Nível Operacional: Execução
 enum UserRole {
-  // NÍVEL ESTRATÉGICO (Global View-Only)
-  ADMIN_MATRIZ           // Dono do Sistema / TI / Financeiro Global
-  GESTOR_REDE            // Coordenadora Pedagógica Geral (Auditoria)
+  // NÍVEL ESTRATÉGICO (God Mode - Full Access)
+  MATRIZ_ADMIN           // Super Admin - Acesso Total ao Sistema
+  COORDENADOR_GERAL      // Coordenador Geral - Visão de Todas as Unidades
   
   // NÍVEL TÁTICO (Local Authority)
-  DIRETOR_UNIDADE        // Autoridade Máxima Local
-  COORD_PEDAGOGICO       // Apoio Local
-  SECRETARIA             // Admin Local
+  DIRETOR_UNIDADE        // Diretor - Gestão da Unidade
+  COORDENADOR_PEDAGOGICO // Coordenador Pedagógico - Apoio Pedagógico Local
+  SECRETARIO             // Secretário - Administração Local
   
   // NÍVEL OPERACIONAL (Execution)
-  NUTRICIONISTA          // Saúde
-  PROFESSOR              // Sala de Aula
+  NUTRICIONISTA          // Nutricionista - Gestão de Saúde e Alimentação
+  PSICOLOGO              // Psicólogo - Atendimento e Acompanhamento
+  PROFESSOR              // Professor - Acesso às suas turmas
 }
 
 enum UnitType {
