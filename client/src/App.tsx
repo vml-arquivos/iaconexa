@@ -21,6 +21,8 @@ import Configuracoes from "./pages/dashboard/Configuracoes";
 import DiarioDigital from "./pages/dashboard/DiarioDigital";
 import DiarioClasse from "./pages/dashboard/DiarioClasse";
 import AgendaAtendimentos from "./pages/dashboard/AgendaAtendimentos";
+import SolicitarMateriais from "./pages/dashboard/SolicitarMateriais";
+import AprovarMateriais from "./pages/dashboard/AprovarMateriais";
 
 // Admin Pages - CRM 360º
 import ClientManagement from "./pages/admin/ClientManagement";
@@ -113,6 +115,18 @@ function Router() {
       <Route path="/dashboard/agenda-atendimentos">
         <DashboardLayout>
           <AgendaAtendimentos />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/dashboard/solicitar-materiais">
+        <DashboardLayout>
+          <SolicitarMateriais />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/dashboard/aprovar-materiais">
+        <DashboardLayout>
+          <AprovarMateriais />
         </DashboardLayout>
       </Route>
       

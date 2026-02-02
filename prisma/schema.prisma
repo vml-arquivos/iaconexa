@@ -140,6 +140,20 @@ enum ApptStatus {
   CANCELED
 }
 
+enum MaterialCategory {
+  HIGIENE
+  LIMPEZA
+  ALIMENTACAO
+  PEDAGOGICO
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PURCHASED
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -177,9 +191,10 @@ model Unit {
   moduloFinanceiro  Boolean @default(false)
   moduloSuprimentos Boolean @default(true)
   
-  users         User[]
-  students      Student[]
-  appointments  Appointment[]
+  users            User[]
+  students         Student[]
+  appointments     Appointment[]
+  materialRequests MaterialRequest[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -225,9 +240,10 @@ model User {
   classId     String?
   class       Class?   @relation(fields: [classId], references: [id])
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  auditLogs   AuditLog[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  auditLogs        AuditLog[]
+  materialRequests MaterialRequest[]
 }
 
 model Employee {
@@ -597,4 +613,33 @@ model Appointment {
   @@index([unitId, scheduledAt])
   @@index([studentId])
   @@index([status])
+}
+
+// ==========================================
+// GESTÃO DE SUPRIMENTOS
+// ==========================================
+
+model MaterialRequest {
+  id              String           @id @default(uuid())
+  unitId          String
+  userId          String
+  category        MaterialCategory
+  itemName        String
+  quantity        Int
+  unit            String           // ex: "cx", "un", "pct", "kg"
+  status          RequestStatus    @default(PENDING)
+  requestedAt     DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  approvedBy      String?
+  rejectionReason String?          @db.Text
+  purchasedAt     DateTime?
+  notes           String?          @db.Text
+  
+  unitRel         Unit             @relation(fields: [unitId], references: [id])
+  userRel         User             @relation(fields: [userId], references: [id])
+  
+  @@index([unitId, status])
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
 }

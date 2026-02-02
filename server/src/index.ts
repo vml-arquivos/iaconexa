@@ -15,6 +15,7 @@ import n8nRoutes from '../routes/n8n-conversas.js';
 import unitSettingsRoutes from '../routes/unit-settings.js';
 import dailyLogRoutes from '../routes/daily-log.js';
 import appointmentsRoutes from '../routes/appointments.js';
+import materialRequestsRoutes from '../routes/material-requests.js';
 import { generalLimiter, loginLimiter, writeLimiter } from '../middleware/rate-limit.middleware.js';
 import { errorHandler, notFoundHandler } from '../middleware/error-handler.middleware.js';
 
@@ -101,6 +102,9 @@ app.use(dailyLogRoutes);
 
 // Rotas de Agendamentos
 app.use(appointmentsRoutes);
+
+// Rotas de Gestão de Suprimentos
+app.use(materialRequestsRoutes);
 
 // ==========================================
 // ROTAS LEGADAS (Compatibilidade)
