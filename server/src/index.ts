@@ -18,6 +18,7 @@ import appointmentsRoutes from '../routes/appointments.js';
 import materialRequestsRoutes from '../routes/material-requests.js';
 import adminManagementRoutes from '../routes/admin-management.js';
 import meetingsRoutes from '../routes/meetings.js';
+import planningRoutes from '../routes/planning.js';
 import { generalLimiter, loginLimiter, writeLimiter } from '../middleware/rate-limit.middleware.js';
 import { errorHandler, notFoundHandler } from '../middleware/error-handler.middleware.js';
 
@@ -113,6 +114,9 @@ app.use('/api', adminManagementRoutes);
 
 // Rotas de Reuniões de Coordenação (HTPC)
 app.use('/api/meetings', meetingsRoutes);
+
+// Rotas de Planejamento BNCC
+app.use('/api/planning', planningRoutes);
 
 // ==========================================
 // ROTAS LEGADAS (Compatibilidade)
