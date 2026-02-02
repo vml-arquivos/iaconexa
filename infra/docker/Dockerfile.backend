@@ -16,7 +16,6 @@ WORKDIR /app
 
 # Copiar arquivos de configuração (contexto é a raiz do projeto)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY patches ./patches/
 COPY prisma ./prisma/
 COPY server/package.json ./server/
 
