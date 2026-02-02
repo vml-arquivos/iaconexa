@@ -19,7 +19,7 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./backups:/backups
+      - ./infra/backups:/backups
     ports:
       - "9432:5432"  # Porta segura sem conflito
     healthcheck:
@@ -104,9 +104,9 @@ services:
       - "3001:3001"  # Porta alinhada com nginx
     
     volumes:
-      - ./uploads:/app/uploads
-      - ./logs:/app/logs
-      - ./backups:/app/backups
+      - ./infra/uploads:/app/uploads
+      - ./infra/logs:/app/logs
+      - ./infra/backups:/app/backups
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
@@ -147,9 +147,9 @@ services:
       - "80:80"  # Porta do Nginx em produção
     
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./uploads:/app/uploads:ro
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
+      - ./infra/uploads:/app/uploads:ro
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -176,7 +176,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ./pgdata
+      device: ./infra/pgdata
 
 # ========================================
 # NETWORKS
