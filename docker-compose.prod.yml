@@ -133,6 +133,14 @@ services:
     expose:
       - 80  # Exposto internamente para Coolify Proxy
     
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.conexa-frontend.rule=Host(`conexa.casadf.com.br`)"
+      - "traefik.http.routers.conexa-frontend.entrypoints=websecure"
+      - "traefik.http.routers.conexa-frontend.tls=true"
+      - "traefik.http.routers.conexa-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.conexa-frontend.loadbalancer.server.port=80"
+    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -142,6 +150,7 @@ services:
     
     networks:
       - conexa_network
+      - coolify
     
     logging:
       driver: "json-file"
@@ -165,3 +174,5 @@ networks:
     ipam:
       config:
         - subnet: 172.28.0.0/16
+  coolify:
+    external: true
