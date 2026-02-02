@@ -15,7 +15,9 @@ import {
   FileText,
   Package,
   UserCircle,
-  DollarSign
+  DollarSign,
+  ClipboardList,
+  CalendarCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,6 +80,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ] : []),
     ...(unitSettings.moduloDiario ? [
       { icon: FileText, label: "Diário de Bordo", href: "/dashboard/diario-rapido" },
+      { icon: ClipboardList, label: "Diário Digital", href: "/dashboard/diario-digital" },
+      { icon: CalendarCheck, label: "Agenda", href: "/dashboard/agenda-atendimentos" },
     ] : []),
     ...(unitSettings.moduloSuprimentos ? [
       { icon: Package, label: "Suprimentos", href: "/dashboard/materiais" },

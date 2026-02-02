@@ -101,6 +101,45 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum SleepStatus {
+  SLEEPING
+  AWAKE
+  NAP_TIME
+}
+
+enum FoodIntake {
+  FULL_MEAL
+  PARTIAL
+  REJECTED
+  NA
+}
+
+enum HygieneStatus {
+  CLEAN
+  DIAPER_CHANGE
+  BATH
+  SOILED
+}
+
+enum Mood {
+  HAPPY
+  CRYING
+  AGITATED
+  CALM
+}
+
+enum ApptType {
+  PARENT_MEETING
+  INTERNAL_COORD
+  HEALTH_CHECK
+}
+
+enum ApptStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -140,6 +179,7 @@ model Unit {
   
   users         User[]
   students      Student[]
+  appointments  Appointment[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -223,6 +263,7 @@ model Class {
   plannings   BNCCPlanning[]
   materialList MaterialList[]
   procurementOrders ProcurementOrder[] // Relation to ProcurementOrder
+  dailyLogs   DailyLog[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -254,6 +295,7 @@ model Student {
   psychRecords PsychologicalRecord[]
   documents   Document[]
   attendance  Attendance[]
+  appointments Appointment[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -439,16 +481,25 @@ model Menu {
 }
 
 model DailyLog {
-  id             String   @id @default(uuid())
-  studentId      String
-  student        Student  @relation(fields: [studentId], references: [id])
-  date           DateTime @default(now())
-  sleep          Boolean  @default(false)
-  sleepTime      String?
-  foodAcceptance String
-  evacuation     String?
-  notes          String?
-  createdAt      DateTime @default(now())
+  id            String       @id @default(uuid())
+  date          DateTime     @default(now())
+  studentId     String
+  classId       String
+  sleepStatus   SleepStatus?
+  foodIntake    FoodIntake?
+  hygieneStatus HygieneStatus?
+  mood          Mood?
+  observations  String?      @db.Text
+  alertTriggered Boolean     @default(false)
+  
+  student       Student      @relation(fields: [studentId], references: [id])
+  class         Class        @relation(fields: [classId], references: [id])
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  @@index([studentId, date])
+  @@index([classId, date])
 }
 
 model PsychologicalRecord {
@@ -524,4 +575,26 @@ model LessonTemplate {
   @@index([segment, bnccField])
   @@index([thematicAxis])
   @@index([weekNumber])
+}
+
+model Appointment {
+  id            String      @id @default(uuid())
+  unitId        String
+  studentId     String?
+  title         String
+  scheduledAt   DateTime
+  type          ApptType
+  status        ApptStatus  @default(SCHEDULED)
+  meetingMinutes String?    @db.Text
+  attendees     String?
+  
+  unit          Unit        @relation(fields: [unitId], references: [id])
+  student       Student?    @relation(fields: [studentId], references: [id])
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@index([unitId, scheduledAt])
+  @@index([studentId])
+  @@index([status])
 }

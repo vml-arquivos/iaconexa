@@ -18,6 +18,8 @@ import TarefasList from "./pages/dashboard/TarefasList";
 import NovaTarefa from "./pages/dashboard/NovaTarefa";
 import CorrecaoTarefa from "./pages/dashboard/CorrecaoTarefa";
 import Configuracoes from "./pages/dashboard/Configuracoes";
+import DiarioDigital from "./pages/dashboard/DiarioDigital";
+import AgendaAtendimentos from "./pages/dashboard/AgendaAtendimentos";
 
 // Admin Pages - CRM 360º
 import ClientManagement from "./pages/admin/ClientManagement";
@@ -89,6 +91,20 @@ function Router() {
       <Route path="/dashboard/configuracoes">
         <DashboardLayout>
           <Configuracoes />
+        </DashboardLayout>
+      </Route>
+      
+      {/* Diário Digital */}
+      <Route path="/dashboard/diario-digital">
+        <DashboardLayout>
+          <DiarioDigital />
+        </DashboardLayout>
+      </Route>
+      
+      {/* Agenda de Atendimentos */}
+      <Route path="/dashboard/agenda-atendimentos">
+        <DashboardLayout>
+          <AgendaAtendimentos />
         </DashboardLayout>
       </Route>
       
