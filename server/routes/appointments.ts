@@ -6,12 +6,15 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { rbacMiddleware, blockStrategicWrite, enforceUnitScope } from '../middleware/rbac.middleware.js';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// Aplicar authMiddleware em todas as rotas
+// Aplicar authMiddleware e RBAC em todas as rotas
 router.use(authMiddleware);
+router.use(enforceUnitScope); // Garante acesso apenas à própria unidade
+router.use(blockStrategicWrite); // Bloqueia edição de nível estratégico
 
 /**
  * GET /api/appointments

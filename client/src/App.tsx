@@ -26,6 +26,7 @@ import PedidosMateriais from "./pages/dashboard/PedidosMateriais";
 // Admin Pages - CRM 360º
 import ClientManagement from "./pages/admin/ClientManagement";
 import FinancialDashboard from "./pages/admin/FinancialDashboard";
+import GlobalReports from "./pages/admin/GlobalReports";
 
 function Router() {
   return (
@@ -163,6 +164,13 @@ function Router() {
       <Route path="/admin/financial">
         <DashboardLayout>
           <FinancialDashboard />
+        </DashboardLayout>
+      </Route>
+      
+      {/* Global Reports - Auditoria (Nível Estratégico) */}
+      <Route path="/admin/global-reports">
+        <DashboardLayout>
+          <GlobalReports />
         </DashboardLayout>
       </Route>
       

@@ -15,15 +15,23 @@ datasource db {
 // ENUMS
 // ==========================================
 
+// HIERARQUIA DE ROLES (RBAC Strict)
+// Nível Estratégico: Vê tudo, não edita operacional
+// Nível Tático: Autoridade local
+// Nível Operacional: Execução
 enum UserRole {
-  MATRIZ_ADMIN
-  COORDENADOR_GERAL
-  DIRETOR_UNIDADE
-  COORDENADOR_PEDAGOGICO
-  PROFESSOR
-  NUTRICIONISTA
-  PSICOLOGO
-  SECRETARIO
+  // NÍVEL ESTRATÉGICO (Global View-Only)
+  ADMIN_MATRIZ           // Dono do Sistema / TI / Financeiro Global
+  GESTOR_REDE            // Coordenadora Pedagógica Geral (Auditoria)
+  
+  // NÍVEL TÁTICO (Local Authority)
+  DIRETOR_UNIDADE        // Autoridade Máxima Local
+  COORD_PEDAGOGICO       // Apoio Local
+  SECRETARIA             // Admin Local
+  
+  // NÍVEL OPERACIONAL (Execution)
+  NUTRICIONISTA          // Saúde
+  PROFESSOR              // Sala de Aula
 }
 
 enum UnitType {

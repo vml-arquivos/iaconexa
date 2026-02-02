@@ -1,14 +1,19 @@
-// ========================================
-// SISTEMA VALENTE - RBAC Middleware
-// Proteção Global de Multi-Tenancy
-// ========================================
+/**
+ * RBAC Middleware - Strict Access Control
+ * Sistema Conexa - Security Hardening
+ * 
+ * Regra de Negócio: "A MATRIZ AUDITA, A UNIDADE EXECUTA"
+ * 
+ * Hierarquia:
+ * - Estratégico (ADMIN_MATRIZ, GESTOR_REDE): Vê tudo, não edita operacional
+ * - Tático (DIRETOR_UNIDADE, COORD_PEDAGOGICO, SECRETARIA): Autoridade local
+ * - Operacional (NUTRICIONISTA, PROFESSOR): Execução
+ */
 
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-// Estender Request para incluir user
+// Extend Express Request to include user
 declare global {
   namespace Express {
     interface Request {
@@ -16,313 +21,250 @@ declare global {
         id: string;
         email: string;
         role: UserRole;
-        schoolId: string | null;
-        classId: string | null;
+        unitId: string | null;
       };
     }
   }
 }
 
-// ========================================
-// HIERARQUIA DE PERMISSÕES
-// ========================================
+// Role Levels
+const STRATEGIC_ROLES: UserRole[] = ['ADMIN_MATRIZ', 'GESTOR_REDE'];
+const TACTICAL_ROLES: UserRole[] = ['DIRETOR_UNIDADE', 'COORD_PEDAGOGICO', 'SECRETARIA'];
+const OPERATIONAL_ROLES: UserRole[] = ['NUTRICIONISTA', 'PROFESSOR'];
 
-const ROLE_HIERARCHY = {
-  // NÍVEL 1: MATRIZ (Acesso total)
-  MATRIZ_ADMIN: {
-    level: 1,
-    canAccessAllSchools: true,
-    canCreateSchools: true,
-    canAccessPsychRecords: false,
-  },
-  MATRIZ_COORD: {
-    level: 1,
-    canAccessAllSchools: true,
-    canCreateSchools: false,
-    canAccessPsychRecords: false,
-  },
-  MATRIZ_NUTRI: {
-    level: 1,
-    canAccessAllSchools: true,
-    canCreateSchools: false,
-    canAccessPsychRecords: false,
-  },
-  MATRIZ_PSYCHO: {
-    level: 1,
-    canAccessAllSchools: true,
-    canCreateSchools: false,
-    canAccessPsychRecords: true, // ÚNICO com acesso
-  },
+// Resource Types
+type ResourceType = 
+  | 'daily-log' 
+  | 'student' 
+  | 'class' 
+  | 'appointment' 
+  | 'material-request' 
+  | 'planning'
+  | 'unit-settings'
+  | 'unit'
+  | 'report';
+
+// Action Types
+type ActionType = 'READ' | 'WRITE' | 'DELETE';
+
+/**
+ * Check if user has permission to perform action on resource
+ */
+export function checkPermission(
+  user: Express.Request['user'],
+  resource: ResourceType,
+  action: ActionType,
+  resourceUnitId?: string
+): { allowed: boolean; reason?: string } {
   
-  // NÍVEL 2: UNIDADE (Gestão local)
-  UNIT_DIRECTOR: {
-    level: 2,
-    canAccessAllSchools: false,
-    canApproveRequests: true,
-    canManageEmployees: true,
-  },
-  UNIT_SECRETARY: {
-    level: 2,
-    canAccessAllSchools: false,
-    canManageEnrollments: true,
-    canIssueCertificates: true,
-  },
+  if (!user) {
+    return { allowed: false, reason: 'User not authenticated' };
+  }
+
+  const { role, unitId } = user;
+
+  // ========================================
+  // STRATEGIC ROLES (Global View-Only)
+  // ========================================
+  if (STRATEGIC_ROLES.includes(role)) {
+    // READ: Allow access to EVERYTHING (Global)
+    if (action === 'READ') {
+      return { allowed: true };
+    }
+
+    // WRITE/DELETE: DENY for operational resources
+    const operationalResources: ResourceType[] = [
+      'daily-log',
+      'student',
+      'class',
+      'appointment',
+      'material-request',
+      'planning'
+    ];
+
+    if (operationalResources.includes(resource)) {
+      return { 
+        allowed: false, 
+        reason: 'Nível estratégico não pode editar dados operacionais. Apenas a unidade pode editar.' 
+      };
+    }
+
+    // EXCEPTION: Can edit unit-settings and create units
+    if (resource === 'unit-settings' || resource === 'unit') {
+      return { allowed: true };
+    }
+
+    // Default deny for strategic on write
+    return { 
+      allowed: false, 
+      reason: 'Permissão negada para nível estratégico' 
+    };
+  }
+
+  // ========================================
+  // TACTICAL & OPERATIONAL ROLES (Local Authority)
+  // ========================================
   
-  // NÍVEL 3: SALA DE AULA (Visão restrita)
-  TEACHER: {
-    level: 3,
-    canAccessAllSchools: false,
-    canAccessOnlyOwnClass: true,
-  },
-};
+  // Must have unitId
+  if (!unitId) {
+    return { 
+      allowed: false, 
+      reason: 'Usuário não está vinculado a uma unidade' 
+    };
+  }
 
-// ========================================
-// MIDDLEWARE: Verificar Autenticação
-// ========================================
+  // If resource has unitId, check if it matches user's unitId
+  if (resourceUnitId && resourceUnitId !== unitId) {
+    return { 
+      allowed: false, 
+      reason: 'Acesso negado: recurso pertence a outra unidade' 
+    };
+  }
 
-export const requireAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    // Verificar se o token JWT está presente
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({ error: 'Token não fornecido' });
+  // TACTICAL ROLES: Full access within their unit
+  if (TACTICAL_ROLES.includes(role)) {
+    return { allowed: true };
+  }
+
+  // OPERATIONAL ROLES: Limited access
+  if (OPERATIONAL_ROLES.includes(role)) {
+    // PROFESSOR: Can only manage their own classes
+    if (role === 'PROFESSOR') {
+      // READ: Can read within their unit
+      if (action === 'READ') {
+        return { allowed: true };
+      }
+
+      // WRITE/DELETE: Only for their assigned resources
+      // This should be checked at route level with additional logic
+      return { allowed: true }; // Basic permission, route will check ownership
     }
-    
-    // Aqui você deve validar o JWT e extrair o userId
-    // Por enquanto, vamos simular (você deve implementar JWT real)
-    const userId = 'user-id-from-jwt'; // TODO: Extrair do JWT
-    
-    // Buscar usuário no banco
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        schoolId: true,
-        classId: true,
-        isActive: true,
-      },
-    });
-    
-    if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Usuário inválido ou inativo' });
+
+    // NUTRICIONISTA: Can manage health-related data
+    if (role === 'NUTRICIONISTA') {
+      const allowedResources: ResourceType[] = ['daily-log', 'student', 'report'];
+      if (allowedResources.includes(resource)) {
+        return { allowed: true };
+      }
+      return { 
+        allowed: false, 
+        reason: 'Nutricionista só pode acessar dados de saúde' 
+      };
     }
-    
-    // Anexar usuário ao request
-    req.user = user;
+  }
+
+  // Default deny
+  return { 
+    allowed: false, 
+    reason: 'Permissão não definida para este role' 
+  };
+}
+
+/**
+ * Middleware to check permissions
+ * Usage: rbacMiddleware('daily-log', 'WRITE')
+ */
+export function rbacMiddleware(resource: ResourceType, action: ActionType) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Get resourceUnitId from request (body, params, or query)
+    const resourceUnitId = req.body?.unitId || req.params?.unitId || req.query?.unitId as string;
+
+    const permission = checkPermission(req.user, resource, action, resourceUnitId);
+
+    if (!permission.allowed) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: permission.reason || 'Você não tem permissão para realizar esta ação',
+        code: 'RBAC_PERMISSION_DENIED'
+      });
+    }
+
     next();
-  } catch (error) {
-    console.error('Erro na autenticação:', error);
-    return res.status(500).json({ error: 'Erro ao autenticar' });
-  }
-};
+  };
+}
 
-// ========================================
-// MIDDLEWARE: Injetar Filtro de Multi-Tenancy
-// ========================================
+/**
+ * Helper to check if user is strategic level
+ */
+export function isStrategicRole(role: UserRole): boolean {
+  return STRATEGIC_ROLES.includes(role);
+}
 
-export const injectSchoolFilter = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+/**
+ * Helper to check if user is tactical level
+ */
+export function isTacticalRole(role: UserRole): boolean {
+  return TACTICAL_ROLES.includes(role);
+}
+
+/**
+ * Helper to check if user is operational level
+ */
+export function isOperationalRole(role: UserRole): boolean {
+  return OPERATIONAL_ROLES.includes(role);
+}
+
+/**
+ * Middleware to restrict strategic roles from write operations
+ */
+export function blockStrategicWrite(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const userRole = ROLE_HIERARCHY[req.user.role];
-  
-  // Se for MATRIZ, não precisa de filtro (acessa tudo)
-  if (userRole.canAccessAllSchools) {
+
+  if (isStrategicRole(req.user.role) && req.method !== 'GET') {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Nível estratégico não pode editar dados operacionais. Apenas visualização permitida.',
+      code: 'STRATEGIC_WRITE_BLOCKED'
+    });
+  }
+
+  next();
+}
+
+/**
+ * Middleware to ensure user can only access their unit's data
+ */
+export function enforceUnitScope(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Strategic roles can access all units
+  if (isStrategicRole(req.user.role)) {
     return next();
   }
-  
-  // Se for UNIT ou TEACHER, DEVE ter schoolId
-  if (!req.user.schoolId) {
-    return res.status(403).json({ 
-      error: 'Usuário sem unidade associada' 
+
+  // Other roles must have unitId
+  if (!req.user.unitId) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Usuário não está vinculado a uma unidade',
+      code: 'NO_UNIT_ASSIGNED'
     });
   }
-  
-  // Injetar schoolId em todas as queries do Prisma
-  // Isso será feito via Prisma Middleware (veja abaixo)
-  
-  next();
-};
 
-// ========================================
-// MIDDLEWARE: Verificar Permissão de Turma (TEACHER)
-// ========================================
-
-export const requireClassAccess = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
-  }
+  // Check if resource belongs to user's unit
+  const resourceUnitId = req.body?.unitId || req.params?.unitId || req.query?.unitId as string;
   
-  // Se for TEACHER, verificar se tem acesso à turma
-  if (req.user.role === 'TEACHER') {
-    const classId = req.params.classId || req.body.classId || req.query.classId;
-    
-    if (!classId) {
-      return res.status(400).json({ 
-        error: 'classId é obrigatório para professores' 
-      });
-    }
-    
-    if (req.user.classId !== classId) {
-      return res.status(403).json({ 
-        error: 'Você não tem acesso a esta turma' 
-      });
-    }
-  }
-  
-  next();
-};
-
-// ========================================
-// MIDDLEWARE: Verificar Permissão de Prontuário Psicológico
-// ========================================
-
-export const requirePsychAccess = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
-  }
-  
-  // Apenas MATRIZ_PSYCHO pode acessar prontuários
-  if (req.user.role !== 'MATRIZ_PSYCHO') {
-    return res.status(403).json({ 
-      error: 'Acesso negado: apenas psicólogos podem acessar prontuários' 
+  if (resourceUnitId && resourceUnitId !== req.user.unitId) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Você não pode acessar dados de outra unidade',
+      code: 'CROSS_UNIT_ACCESS_DENIED'
     });
   }
-  
+
   next();
-};
-
-// ========================================
-// MIDDLEWARE: Verificar Permissão de Aprovação
-// ========================================
-
-export const requireApprovalPermission = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
-  }
-  
-  const allowedRoles: UserRole[] = [
-    'MATRIZ_ADMIN',
-    'UNIT_DIRECTOR',
-  ];
-  
-  if (!allowedRoles.includes(req.user.role)) {
-    return res.status(403).json({ 
-      error: 'Você não tem permissão para aprovar requisições' 
-    });
-  }
-  
-  next();
-};
-
-// ========================================
-// PRISMA MIDDLEWARE: Injeção Automática de schoolId
-// ========================================
-
-export const setupPrismaMiddleware = () => {
-  prisma.$use(async (params, next) => {
-    // Lista de modelos que precisam de filtro de schoolId
-    const modelsWithSchool = [
-      'Student',
-      'Class',
-      'DailyLog',
-      'PsychologicalRecord',
-      'InventoryItem',
-      'InventoryRequest',
-      'BNCCPlanning',
-      'Supplier',
-    ];
-    
-    // Verificar se o modelo precisa de filtro
-    if (modelsWithSchool.includes(params.model || '')) {
-      // Aqui você pode injetar o schoolId baseado no contexto
-      // Por enquanto, vamos apenas logar (você deve implementar a lógica real)
-      
-      // Exemplo de injeção:
-      // if (params.action === 'findMany' || params.action === 'findFirst') {
-      //   params.args.where = {
-      //     ...params.args.where,
-      //     schoolId: currentUserSchoolId,
-      //   };
-      // }
-    }
-    
-    return next(params);
-  });
-};
-
-// ========================================
-// HELPER: Verificar se usuário pode acessar escola
-// ========================================
-
-export const canAccessSchool = (
-  userRole: UserRole,
-  userSchoolId: string | null,
-  targetSchoolId: string
-): boolean => {
-  const roleConfig = ROLE_HIERARCHY[userRole];
-  
-  // MATRIZ pode acessar qualquer escola
-  if (roleConfig.canAccessAllSchools) {
-    return true;
-  }
-  
-  // Outros só podem acessar sua própria escola
-  return userSchoolId === targetSchoolId;
-};
-
-// ========================================
-// HELPER: Verificar se usuário pode criar escola
-// ========================================
-
-export const canCreateSchool = (userRole: UserRole): boolean => {
-  return ROLE_HIERARCHY[userRole]?.canCreateSchools || false;
-};
-
-// ========================================
-// HELPER: Verificar se usuário pode aprovar requisições
-// ========================================
-
-export const canApproveRequests = (userRole: UserRole): boolean => {
-  return ROLE_HIERARCHY[userRole]?.canApproveRequests || false;
-};
-
-// ========================================
-// EXPORTAÇÕES
-// ========================================
+}
 
 export default {
-  requireAuth,
-  injectSchoolFilter,
-  requireClassAccess,
-  requirePsychAccess,
-  requireApprovalPermission,
-  setupPrismaMiddleware,
-  canAccessSchool,
-  canCreateSchool,
-  canApproveRequests,
+  checkPermission,
+  rbacMiddleware,
+  isStrategicRole,
+  isTacticalRole,
+  isOperationalRole,
+  blockStrategicWrite,
+  enforceUnitScope
 };
