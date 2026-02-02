@@ -162,6 +162,19 @@ enum ObservationType {
   SOCIAL          // Interação
 }
 
+enum MeetingType {
+  WEEKLY_UNIT      // Semanal (Professores + Coord Unidade)
+  MONTHLY_GENERAL  // Mensal (Coord Gerais + Diretoras)
+  EXTRAORDINARY    // Emergencial
+}
+
+enum TopicStatus {
+  SUGGESTED
+  APPROVED
+  DISCUSSED
+  DEFERRED         // Ficou para a próxima
+}
+
 enum RequestStatus {
   PENDING
   APPROVED
@@ -210,6 +223,7 @@ model Unit {
   students         Student[]
   appointments     Appointment[]
   materialRequests MaterialRequest[]
+  meetings         Meeting[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -260,6 +274,12 @@ model User {
   auditLogs        AuditLog[]
   materialRequests MaterialRequest[]
   observations     StudentObservation[]
+  
+  // Meeting relations
+  hostedMeetings   Meeting[]       @relation("MeetingHost")
+  attendedMeetings Meeting[]       @relation("MeetingAttendees")
+  suggestedTopics  MeetingTopic[]
+  assignedActions  ActionItem[]
 }
 
 model Employee {
@@ -710,4 +730,74 @@ model StudentObservation {
   @@index([authorId])
   @@index([type])
   @@index([isPrivate])
+}
+
+
+// ==========================================
+// MÓDULO DE REUNIÕES DE COORDENAÇÃO (HTPC)
+// ==========================================
+
+model Meeting {
+  id          String       @id @default(uuid())
+  unitId      String?      // Se null, é reunião Geral (Matriz)
+  hostId      String       // O "Mediador" da vez (Pode ser um Professor)
+  date        DateTime
+  type        MeetingType
+  title       String       // ex: "Coordenação - Semana 05"
+  minutes     String?      @db.Text // A Ata final
+  isClosed    Boolean      @default(false)
+  
+  topics      MeetingTopic[]
+  actions     ActionItem[]
+  attendees   User[]       @relation("MeetingAttendees")
+  
+  unit        Unit?        @relation(fields: [unitId], references: [id])
+  host        User         @relation("MeetingHost", fields: [hostId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([unitId, date])
+  @@index([hostId])
+  @@index([type])
+  @@index([isClosed])
+}
+
+model MeetingTopic {
+  id          String       @id @default(uuid())
+  meetingId   String
+  suggesterId String       // Quem sugeriu o tema
+  title       String
+  description String?      @db.Text
+  status      TopicStatus  @default(SUGGESTED)
+  
+  meeting     Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  suggester   User         @relation(fields: [suggesterId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([meetingId])
+  @@index([suggesterId])
+  @@index([status])
+}
+
+model ActionItem {
+  id          String       @id @default(uuid())
+  meetingId   String
+  assigneeId  String       // Quem vai executar
+  description String       @db.Text // ex: "Conversar com a mãe do João"
+  dueDate     DateTime?
+  isCompleted Boolean      @default(false)
+  
+  meeting     Meeting      @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  assignee    User         @relation(fields: [assigneeId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([meetingId])
+  @@index([assigneeId])
+  @@index([isCompleted])
+  @@index([dueDate])
 }
