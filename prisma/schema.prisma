@@ -41,14 +41,42 @@ enum InventoryCategory {
   MEDICINE
   DIGNITY_CRITICAL
 }
-
 enum StockAlertLevel {
   NONE
   LOW
   CRITICAL
   EXCESS
   OK
-  EMERGENCY
+}
+
+enum Segment {
+  BERCARIO_I    // EI01 - Bebês (0-1 ano)
+  BERCARIO_II   // EI01 - Bebês (1-2 anos)
+  MATERNAL_I    // EI02 - Crianças Bem Pequenas (2-3 anos)
+  MATERNAL_II   // EI03 - Crianças Pequenas (3-4 anos)
+}
+
+enum BNCCField {
+  O_EU_O_OUTRO_E_O_NOS                           // EO
+  CORPO_GESTOS_E_MOVIMENTOS                      // CG
+  TRACOS_SONS_CORES_E_FORMAS                     // TS
+  ESCUTA_FALA_PENSAMENTO_E_IMAGINACAO            // EF
+  ESPACOS_TEMPOS_QUANTIDADES_RELACOES_TRANSFORMACOES // ET
+}
+
+enum Month {
+  JANEIRO
+  FEVEREIRO
+  MARCO
+  ABRIL
+  MAIO
+  JUNHO
+  JULHO
+  AGOSTO
+  SETEMBRO
+  OUTUBRO
+  NOVEMBRO
+  DEZEMBRO
 }
 
 enum DocumentType {
@@ -458,4 +486,42 @@ model AuditLog {
   schoolId    String?
   school      School?  @relation(fields: [schoolId], references: [id])
   createdAt   DateTime @default(now())
+}
+
+model LessonTemplate {
+  id                    String    @id @default(uuid())
+  
+  // Filtros de Busca
+  month                 Month
+  weekNumber            Int       // Número da semana no ano (1-52)
+  thematicAxis          String    // Ex: "Adaptação e Acolhimento", "Festa Junina"
+  segment               Segment
+  bnccField             BNCCField
+  
+  // Data e Contexto
+  date                  String?   // Ex: "09/02 - Seg"
+  weekContext           String?   // Ex: "Semana de acolhimento e inserção", "RECESSO"
+  
+  // Objetivos BNCC
+  bnccCode              String    // Ex: "EI01EO03"
+  bnccObjective         String    @db.Text // Transcrição literal do objetivo BNCC
+  
+  // Objetivos Currículo em Movimento
+  curriculumObjective   String    @db.Text // Transcrição literal do currículo DF
+  
+  // Intencionalidade Pedagógica
+  pedagogicalIntent     String    @db.Text // Propósito educativo da atividade
+  
+  // Exemplo de Experiência/Atividade
+  activityExample       String    @db.Text // Sugestão prática de vivência
+  
+  // Metadados
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  // Índices para busca eficiente
+  @@index([month, segment])
+  @@index([segment, bnccField])
+  @@index([thematicAxis])
+  @@index([weekNumber])
 }

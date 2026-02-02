@@ -475,6 +475,177 @@ async function main() {
   console.log('✅ Cardápio global criado');
 
   // ========================================
+  // 8. CRIAR TEMPLATES PEDAGÓGICOS (CURRÍCULO 2026)
+  // ========================================
+  console.log('📚 Criando templates pedagógicos do Currículo 2026...');
+
+  const templatesData = [
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 6,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'O_EU_O_OUTRO_E_O_NOS',
+      date: '09/02 - Seg',
+      weekContext: 'Semana de acolhimento e inserção - rotina flexível',
+      bnccCode: 'EI01EO03',
+      bnccObjective: 'Estabelecer vínculos afetivos com adultos e outras crianças, sentindo-se protegido e seguro no ambiente educativo.',
+      curriculumObjective: 'Perceber o ambiente de educação coletiva como um local afetivo e protetor, que lhe transmite segurança e acolhimento.',
+      pedagogicalIntent: 'Favorecer a adaptação inicial dos bebês, promovendo vínculo, segurança emocional e sentimento de pertencimento ao espaço escolar.',
+      activityExample: 'Acolhimento no tapete com músicas suaves, colo e exploração livre da sala com presença constante do adulto de referência.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 6,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'CORPO_GESTOS_E_MOVIMENTOS',
+      date: '10/02 - Ter',
+      weekContext: 'Semana de acolhimento e inserção - rotina flexível',
+      bnccCode: 'EI01CG01',
+      bnccObjective: 'Movimentar as partes do corpo para exprimir corporalmente emoções, necessidades e desejos.',
+      curriculumObjective: 'Movimentar as partes do corpo para exprimir corporalmente emoções, necessidades e desejos.',
+      pedagogicalIntent: 'Estimular a expressão corporal como forma primordial de comunicação dos bebês.',
+      activityExample: 'Brincadeiras corporais com músicas, espelho e gestos, valorizando movimentos espontâneos e expressões faciais.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 6,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'TRACOS_SONS_CORES_E_FORMAS',
+      date: '11/02 - Qua',
+      weekContext: 'Semana de acolhimento e inserção - rotina flexível',
+      bnccCode: 'EI01TS02',
+      bnccObjective: 'Manipular materiais diversos e variados para explorar cores, formas, texturas e sons.',
+      curriculumObjective: 'Manusear objetos e brinquedos coloridos.',
+      pedagogicalIntent: 'Ampliar a percepção visual e o interesse pelas cores por meio da exploração ativa de objetos.',
+      activityExample: 'Cesto de brinquedos coloridos para exploração livre no chão, com nomeação das cores pelo adulto.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 6,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'ESCUTA_FALA_PENSAMENTO_E_IMAGINACAO',
+      date: '12/02 - Qui',
+      weekContext: 'Semana de acolhimento e inserção - rotina flexível',
+      bnccCode: 'EI01EF04',
+      bnccObjective: 'Reconhecer quando é chamado por seu nome e reconhecer os nomes das pessoas com quem convive.',
+      curriculumObjective: 'Reconhecer quando é chamado por seu nome e reconhecer os nomes das pessoas com quem convive.',
+      pedagogicalIntent: 'Fortalecer a identidade do bebê e o vínculo com os adultos e pares por meio do reconhecimento do nome.',
+      activityExample: 'Roda de acolhimento com músicas e chamadas nominais, utilizando fotos das crianças e da equipe.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 6,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'ESPACOS_TEMPOS_QUANTIDADES_RELACOES_TRANSFORMACOES',
+      date: '13/02 - Sex',
+      weekContext: 'Semana de acolhimento e inserção - rotina flexível',
+      bnccCode: 'EI01ET01',
+      bnccObjective: 'Explorar o ambiente pela ação e observação, manipulando, experimentando e fazendo descobertas.',
+      curriculumObjective: 'Explorar o ambiente pela ação e observação, manipulando, experimentando e fazendo descobertas.',
+      pedagogicalIntent: 'Incentivar a curiosidade e a exploração ativa dos espaços e objetos do cotidiano escolar.',
+      activityExample: 'Exploração orientada da sala e do pátio com objetos dispostos para manipulação e observação livre.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 8,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'O_EU_O_OUTRO_E_O_NOS',
+      date: '23/02 - Seg',
+      weekContext: 'Semana letiva completa',
+      bnccCode: 'EI01EO01',
+      bnccObjective: 'Interagir com outras crianças e adultos, adaptando-se gradativamente às rotinas de cuidado.',
+      curriculumObjective: 'Interagir com crianças de diferentes faixas etárias e com adultos, percebendo que suas ações têm efeitos nas outras pessoas e constituindo relações de amizade.',
+      pedagogicalIntent: 'Promover interações afetivas entre os bebês e os adultos, favorecendo a construção inicial de vínculos e a percepção do outro.',
+      activityExample: 'Brincadeira livre em pequenos grupos, com mediação do adulto incentivando trocas de olhares, gestos e aproximações.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 8,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'CORPO_GESTOS_E_MOVIMENTOS',
+      date: '24/02 - Ter',
+      weekContext: 'Semana letiva completa',
+      bnccCode: 'EI01CG02',
+      bnccObjective: 'Experimentar as possibilidades corporais nas brincadeiras e interações em ambientes acolhedores e desafiantes.',
+      curriculumObjective: 'Experimentar as possibilidades corporais nas brincadeiras e interações em ambientes acolhedores e desafiantes.',
+      pedagogicalIntent: 'Estimular a exploração do corpo em diferentes posições e movimentos, respeitando o ritmo individual dos bebês.',
+      activityExample: 'Circuito simples no chão com almofadas, colchonetes e túneis baixos para engatinhar, rolar e sentar.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 8,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'TRACOS_SONS_CORES_E_FORMAS',
+      date: '25/02 - Qua',
+      weekContext: 'Semana letiva completa',
+      bnccCode: 'EI01TS01',
+      bnccObjective: 'Explorar sons produzidos com o próprio corpo e com objetos do ambiente.',
+      curriculumObjective: 'Escutar diferentes fontes sonoras: corpo (balbucios, vocalizações, onomatopeias e palmas); natureza (sons da chuva, do vento, de animais, das folhas secas, pedras, dentre outros); objetos cotidianos e materiais reutilizáveis (caixas de papelão, potes de plástico, panelas, colher de pau, madeira, garrafas, tampinhas, dentre outros).',
+      pedagogicalIntent: 'Ampliar a escuta e a percepção auditiva dos bebês por meio de diferentes fontes sonoras presentes no cotidiano.',
+      activityExample: 'Exploração sonora com objetos do dia a dia, palmas, vocalizações e sons gravados da natureza, permitindo a livre experimentação.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 8,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'ESCUTA_FALA_PENSAMENTO_E_IMAGINACAO',
+      date: '26/02 - Qui',
+      weekContext: 'Semana letiva completa',
+      bnccCode: 'EI01EF02',
+      bnccObjective: 'Imitar sons e palavras ouvidas.',
+      curriculumObjective: 'Imitar sons e palavras ouvidas.',
+      pedagogicalIntent: 'Incentivar a imitação como estratégia inicial de comunicação e desenvolvimento da oralidade dos bebês.',
+      activityExample: 'Cantigas curtas com repetição de sons e palavras simples, incentivando a imitação espontânea dos bebês.',
+    },
+    {
+      month: 'FEVEREIRO',
+      weekNumber: 8,
+      thematicAxis: 'Adaptação e Acolhimento',
+      segment: 'BERCARIO_I',
+      bnccField: 'ESPACOS_TEMPOS_QUANTIDADES_RELACOES_TRANSFORMACOES',
+      date: '27/02 - Sex',
+      weekContext: 'Semana letiva completa',
+      bnccCode: 'EI01ET06',
+      bnccObjective: 'Perceber quantidades em situações do cotidiano.',
+      curriculumObjective: 'Perceber quantidades distintas em relação aos brinquedos, livros, entre outros materiais.',
+      pedagogicalIntent: 'Introduzir noções iniciais de quantidade por meio da observação e comparação de objetos no cotidiano.',
+      activityExample: 'Brincadeira de exploração com caixas contendo poucos e muitos brinquedos, permitindo observar, retirar e guardar os objetos.',
+    },
+  ];
+
+  let templatesCreated = 0;
+  for (const templateData of templatesData) {
+    await prisma.lessonTemplate.create({
+      data: {
+        month: templateData.month as any,
+        weekNumber: templateData.weekNumber,
+        thematicAxis: templateData.thematicAxis,
+        segment: templateData.segment as any,
+        bnccField: templateData.bnccField as any,
+        date: templateData.date,
+        weekContext: templateData.weekContext,
+        bnccCode: templateData.bnccCode,
+        bnccObjective: templateData.bnccObjective,
+        curriculumObjective: templateData.curriculumObjective,
+        pedagogicalIntent: templateData.pedagogicalIntent,
+        activityExample: templateData.activityExample,
+      },
+    });
+    templatesCreated++;
+  }
+
+  console.log(`✅ ${templatesCreated} templates pedagógicos criados (Fevereiro 2026 - Berçário I)`);
+
+  // ========================================
   // RESUMO
   // ========================================
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -489,6 +660,7 @@ async function main() {
   console.log(`  • 4 Alunos criados`);
   console.log(`  • 5 Itens de estoque criados`);
   console.log(`  • 1 Cardápio global criado`);
+  console.log(`  • ${templatesCreated} Templates pedagógicos criados (Currículo 2026)`);
   console.log('\n👥 Hierarquia de Usuários:');
   console.log('  MATRIZ:');
   console.log('    • MATRIZ_ADMIN: admin@cocris.org');
