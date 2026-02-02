@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   BookOpen, 
   CheckSquare, 
-  Users, 
   Settings, 
   LogOut, 
   Menu, 
@@ -12,23 +11,15 @@ import {
   Bell,
   Search,
   Zap,
-  DollarSign,
-  UserCircle,
-  ChevronDown,
   GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isAdminOpen, setIsAdminOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Visão Geral", href: "/dashboard" },
@@ -38,18 +29,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { icon: GraduationCap, label: "Turmas", href: "/dashboard/turmas" },
   ];
 
-  const adminItems = [
-    { icon: UserCircle, label: "CRM 360º - Clientes", href: "/admin/clients" },
-    { icon: DollarSign, label: "Painel Financeiro", href: "/admin/financeiro" },
-  ];
-
-  const isAdminRoute = location.startsWith('/admin') || 
-    location === '/dashboard/clientes' || 
-    location === '/dashboard/alunos' ||
-    location === '/dashboard/financeiro';
-
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside 
         className={`
@@ -84,43 +73,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
-
-          {/* Separador */}
-          <div className="my-4 border-t border-border" />
-
-          {/* Menu Admin - CRM & Financeiro */}
-          <Collapsible open={isAdminOpen} onOpenChange={setIsAdminOpen}>
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-                <span className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Administração
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isAdminOpen ? 'rotate-180' : ''}`} />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-1 mt-1">
-              {adminItems.map((item) => {
-                const isActive = location === item.href || 
-                  (item.href === '/admin/clients' && (location === '/dashboard/clientes' || location === '/dashboard/alunos')) ||
-                  (item.href === '/admin/financeiro' && location === '/dashboard/financeiro');
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <a className={`
-                      flex items-center gap-3 px-4 py-2.5 ml-2 rounded-lg transition-all duration-200
-                      ${isActive 
-                        ? "bg-primary/10 text-primary font-medium shadow-sm" 
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      }
-                    `}>
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                      <span className="text-sm">{item.label}</span>
-                    </a>
-                  </Link>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Separador */}
           <div className="my-4 border-t border-border" />

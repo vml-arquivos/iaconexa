@@ -17,6 +17,7 @@ import AutomacaoView from "./pages/dashboard/AutomacaoView";
 import TarefasList from "./pages/dashboard/TarefasList";
 import NovaTarefa from "./pages/dashboard/NovaTarefa";
 import CorrecaoTarefa from "./pages/dashboard/CorrecaoTarefa";
+import Configuracoes from "./pages/dashboard/Configuracoes";
 
 // Admin Pages - CRM 360º
 import ClientManagement from "./pages/admin/ClientManagement";
@@ -81,6 +82,13 @@ function Router() {
       <Route path="/dashboard/tarefas/:id/correcao">
         <DashboardLayout>
           <CorrecaoTarefa />
+        </DashboardLayout>
+      </Route>
+      
+      {/* Configurações */}
+      <Route path="/dashboard/configuracoes">
+        <DashboardLayout>
+          <Configuracoes />
         </DashboardLayout>
       </Route>
       
