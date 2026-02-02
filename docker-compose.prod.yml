@@ -19,7 +19,6 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./infra/backups:/backups
     ports:
       - "9432:5432"  # Porta segura sem conflito
     healthcheck:
@@ -103,11 +102,6 @@ services:
     expose:
       - 3001  # Exposto internamente para Coolify Proxy
     
-    volumes:
-      - ./infra/uploads:/app/uploads
-      - ./infra/logs:/app/logs
-      - ./infra/backups:/app/backups
-    
     networks:
       - conexa_network
     
@@ -139,11 +133,6 @@ services:
     expose:
       - 80  # Exposto internamente para Coolify Proxy
     
-    volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
-      - ./infra/uploads:/app/uploads:ro
-    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -166,10 +155,6 @@ services:
 volumes:
   pgdata:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./infra/pgdata
 
 # ========================================
 # NETWORKS
