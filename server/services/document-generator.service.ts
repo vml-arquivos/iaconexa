@@ -24,10 +24,11 @@ interface DiarioClasseData {
     name: string;
     dailyLogs: {
       date: Date;
-      breakfast: string;
-      lunch: string;
-      sleepQuality: string;
-      mood: string;
+      foodIntake: string | null;
+      sleepStatus: string | null;
+      hygieneStatus: string | null;
+      mood: string | null;
+      observations: string | null;
     }[];
   }[];
 }
@@ -344,11 +345,11 @@ async function analyzeStudentData(student: any, startDate: Date, endDate: Date):
   }
   
   // Alimentação
-  const feedingGood = logs.filter((l: any) => l.lunch === 'COMEU_TUDO').length;
+  const feedingGood = logs.filter((l: any) => l.foodIntake === 'FULL_MEAL').length;
   const feedingPattern = feedingGood > presentDays * 0.7 ? 'Excelente' : 'Regular';
   
   // Sono
-  const sleepGood = logs.filter((l: any) => l.sleepQuality === 'BOM').length;
+  const sleepGood = logs.filter((l: any) => l.sleepStatus === 'SLEEPING').length;
   const sleepPattern = sleepGood > presentDays * 0.7 ? 'Adequado' : 'Irregular';
   
   // Texto descritivo (IA)
