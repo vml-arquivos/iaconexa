@@ -140,11 +140,11 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_URL: ${API_URL:-http://localhost:9001}
+      VITE_API_URL: ${API_URL:-http://localhost:3001}
       VITE_APP_NAME: Conexa
     
     ports:
-      - "9173:5173"  # Porta segura sem conflito
+      - "80:80"  # Porta do Nginx em produção
     
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
