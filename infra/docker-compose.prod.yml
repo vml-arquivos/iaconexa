@@ -41,8 +41,8 @@ services:
   # ========================================
   backend:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
+      context: ../
+      dockerfile: infra/docker/Dockerfile.backend
       args:
         NODE_ENV: production
     image: conexa-backend:latest
@@ -66,9 +66,9 @@ services:
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-10}
       
       # URLs
-      API_URL: ${API_URL:-https://conexa.casadf.com.br/api}
-      FRONTEND_URL: ${FRONTEND_URL:-https://conexa.casadf.com.br}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://conexa.casadf.com.br}
+      API_URL: https://conexa.casadf.com.br/api
+      FRONTEND_URL: https://conexa.casadf.com.br
+      CORS_ORIGIN: https://conexa.casadf.com.br
       
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -129,8 +129,8 @@ services:
   # ========================================
   frontend:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.frontend
+      context: ../
+      dockerfile: infra/docker/Dockerfile.frontend
       args:
         VITE_API_URL: ${API_URL:-https://conexa.casadf.com.br/api}
     image: conexa-frontend:latest
@@ -140,7 +140,7 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_URL: ${API_URL:-https://conexa.casadf.com.br/api}
+      VITE_API_URL: https://conexa.casadf.com.br/api
       VITE_APP_NAME: Conexa
     
     ports:

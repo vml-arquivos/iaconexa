@@ -6,13 +6,13 @@ WORKDIR /app
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-# Copiar arquivos de configuração (contexto é infra/)
-COPY ../package.json ../pnpm-lock.yaml ../pnpm-workspace.yaml ./
-COPY ../patches ./patches/
-COPY ../client/package.json ./client/
+# Copiar arquivos de configuração (contexto é a raiz do projeto)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches/
+COPY client/package.json ./client/
 RUN npm install -g pnpm@10.4.1 && pnpm install --frozen-lockfile
-COPY ../client ./client/
-COPY ../shared ./shared/
+COPY client ./client/
+COPY shared ./shared/
 
 # Build do frontend
 WORKDIR /app/client
