@@ -137,7 +137,7 @@ services:
       VITE_APP_NAME: Conexa
     
     ports:
-      - "80:80"  # Porta do Nginx em produção
+      - "8080:80"  # Porta do Nginx em produção (8080 no host, 80 no container)
     
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
