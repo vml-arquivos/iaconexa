@@ -61,7 +61,7 @@ export class StockPredictionService {
 
       if (daysRemaining <= ALERT_THRESHOLDS.CRITICAL) {
         alertLevel = StockAlertLevel.CRITICAL;
-        urgency = StockAlertLevel.EMERGENCY;
+        urgency = StockAlertLevel.CRITICAL;
       } else if (daysRemaining <= ALERT_THRESHOLDS.LOW) {
         alertLevel = StockAlertLevel.LOW;
         urgency = StockAlertLevel.LOW; // Map LOW to LOW

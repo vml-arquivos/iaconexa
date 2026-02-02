@@ -163,12 +163,30 @@ export function checkPermission(
 /**
  * Middleware to check permissions
  * Usage: rbacMiddleware('daily-log', 'WRITE')
+ * OR: rbacMiddleware(['ADMIN_MATRIZ', 'DIRETOR_UNIDADE']) for role-based access
  */
-export function rbacMiddleware(resource: ResourceType, action: ActionType) {
+export function rbacMiddleware(resourceOrRoles: ResourceType | UserRole[], action?: ActionType) {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Get resourceUnitId from request (body, params, or query)
-    const resourceUnitId = req.body?.unitId || req.params?.unitId || req.query?.unitId as string;
+    // Check if it's role-based access (array of roles)
+    if (Array.isArray(resourceOrRoles)) {
+      const allowedRoles = resourceOrRoles as UserRole[];
+      if (!req.user || !allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Você não tem permissão para realizar esta ação',
+          code: 'RBAC_ROLE_DENIED'
+        });
+      }
+      return next();
+    }
 
+    // Resource-based access
+    const resource = resourceOrRoles as ResourceType;
+    if (!action) {
+      return res.status(500).json({ error: 'Action is required for resource-based access' });
+    }
+
+    const resourceUnitId = req.body?.unitId || req.params?.unitId || req.query?.unitId as string;
     const permission = checkPermission(req.user, resource, action, resourceUnitId);
 
     if (!permission.allowed) {
