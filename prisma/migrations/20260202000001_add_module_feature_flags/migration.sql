@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Unit" ADD COLUMN "moduloPedagogico" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN "moduloDiario" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN "moduloCRM" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "moduloFinanceiro" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "moduloSuprimentos" BOOLEAN NOT NULL DEFAULT true;

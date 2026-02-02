@@ -43,7 +43,13 @@ async function main() {
       type: 'MATRIZ',
       phone: '(61) 3575-4125',
       address: 'SHIS QI 11 Conjunto 7 Casa 14, Brasília - DF',
-      email: 'matriz@cocris.org'
+      email: 'matriz@cocris.org',
+      // Módulos ativos na Matriz
+      moduloPedagogico: true,
+      moduloDiario: true,
+      moduloCRM: true,
+      moduloFinanceiro: true,
+      moduloSuprimentos: true,
     },
     { 
       name: 'CEPI Arara Canindé', 
@@ -51,7 +57,13 @@ async function main() {
       type: 'UNIDADE',
       phone: '(61) 3575-0001',
       address: 'Região Administrativa, Brasília - DF',
-      email: 'arara@cocris.org'
+      email: 'arara@cocris.org',
+      // Módulos ativos na Unidade 1
+      moduloPedagogico: true,
+      moduloDiario: true,
+      moduloCRM: false,
+      moduloFinanceiro: false,
+      moduloSuprimentos: true,
     },
     { 
       name: 'CEPI Beija-Flor', 
@@ -59,7 +71,13 @@ async function main() {
       type: 'UNIDADE',
       phone: '(61) 3575-0002',
       address: 'Região Administrativa, Brasília - DF',
-      email: 'beijaflor@cocris.org'
+      email: 'beijaflor@cocris.org',
+      // Módulos ativos na Unidade 2
+      moduloPedagogico: true,
+      moduloDiario: true,
+      moduloCRM: false,
+      moduloFinanceiro: false,
+      moduloSuprimentos: true,
     },
   ];
 
@@ -77,6 +95,11 @@ async function main() {
         address: unitData.address,
         email: unitData.email,
         associationId: association.id,
+        moduloPedagogico: unitData.moduloPedagogico,
+        moduloDiario: unitData.moduloDiario,
+        moduloCRM: unitData.moduloCRM,
+        moduloFinanceiro: unitData.moduloFinanceiro,
+        moduloSuprimentos: unitData.moduloSuprimentos,
       },
     });
 

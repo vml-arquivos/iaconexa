@@ -103,6 +103,13 @@ model Unit {
   associationId String
   association   Association @relation(fields: [associationId], references: [id])
   
+  // Feature Flags - Controle de Módulos
+  moduloPedagogico  Boolean @default(true)
+  moduloDiario      Boolean @default(true)
+  moduloCRM         Boolean @default(false)
+  moduloFinanceiro  Boolean @default(false)
+  moduloSuprimentos Boolean @default(true)
+  
   users         User[]
   students      Student[]
   

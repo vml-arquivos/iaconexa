@@ -12,6 +12,7 @@ import materialOrderRoutes from '../routes/material-orders.js';
 import studentRoutes from '../routes/students-advanced.js';
 import financeRoutes from '../routes/finance.js';
 import n8nRoutes from '../routes/n8n-conversas.js';
+import unitSettingsRoutes from '../routes/unit-settings.js';
 import { generalLimiter, loginLimiter, writeLimiter } from '../middleware/rate-limit.middleware.js';
 import { errorHandler, notFoundHandler } from '../middleware/error-handler.middleware.js';
 
@@ -89,6 +90,9 @@ app.use('/api/finance', financeRoutes);
 
 // Rotas de Integração N8N/WhatsApp
 app.use('/api/n8n', n8nRoutes);
+
+// Rotas de Configurações de Unidades
+app.use('/api/unit-settings', unitSettingsRoutes);
 
 // ==========================================
 // ROTAS LEGADAS (Compatibilidade)
@@ -181,6 +185,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`   - /api/material-orders (Pedidos)`);
   console.log(`   - /api/finance         (Financeiro)`);
   console.log(`   - /api/n8n             (WhatsApp/N8N)`);
+  console.log(`   - /api/unit-settings   (Configurações de Unidades)`);
   console.log(`\n✅ Sistema pronto para receber requisições\n`);
 });
 

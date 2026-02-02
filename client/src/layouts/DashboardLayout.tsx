@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   LayoutDashboard, 
@@ -11,23 +11,92 @@ import {
   Bell,
   Search,
   Zap,
-  GraduationCap
+  GraduationCap,
+  FileText,
+  Package,
+  UserCircle,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+interface UnitSettings {
+  moduloPedagogico: boolean;
+  moduloDiario: boolean;
+  moduloCRM: boolean;
+  moduloFinanceiro: boolean;
+  moduloSuprimentos: boolean;
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [unitSettings, setUnitSettings] = useState<UnitSettings>({
+    moduloPedagogico: true,
+    moduloDiario: true,
+    moduloCRM: false,
+    moduloFinanceiro: false,
+    moduloSuprimentos: true,
+  });
 
-  const menuItems = [
+  // Carregar configurações da unidade
+  useEffect(() => {
+    loadUnitSettings();
+  }, []);
+
+  const loadUnitSettings = async () => {
+    try {
+      const response = await fetch('/api/unit-settings');
+      const units = await response.json();
+      
+      if (units && units.length > 0) {
+        const unit = units[0]; // Primeira unidade
+        setUnitSettings({
+          moduloPedagogico: unit.moduloPedagogico,
+          moduloDiario: unit.moduloDiario,
+          moduloCRM: unit.moduloCRM,
+          moduloFinanceiro: unit.moduloFinanceiro,
+          moduloSuprimentos: unit.moduloSuprimentos,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações da unidade:', error);
+    }
+  };
+
+  // Menu items base (sempre visíveis)
+  const baseMenuItems = [
     { icon: LayoutDashboard, label: "Visão Geral", href: "/dashboard" },
-    { icon: BookOpen, label: "Planejamentos", href: "/dashboard/planejamentos" },
-    { icon: Zap, label: "Automação (Demo)", href: "/dashboard/automacao" },
-    { icon: CheckSquare, label: "Tarefas", href: "/dashboard/tarefas" },
-    { icon: GraduationCap, label: "Turmas", href: "/dashboard/turmas" },
   ];
+
+  // Menu items condicionais baseados em feature flags
+  const conditionalMenuItems = [
+    ...(unitSettings.moduloPedagogico ? [
+      { icon: BookOpen, label: "Planejamentos", href: "/dashboard/planejamentos" },
+      { icon: CheckSquare, label: "Tarefas", href: "/dashboard/tarefas" },
+      { icon: GraduationCap, label: "Turmas", href: "/dashboard/turmas" },
+    ] : []),
+    ...(unitSettings.moduloDiario ? [
+      { icon: FileText, label: "Diário de Bordo", href: "/dashboard/diario-rapido" },
+    ] : []),
+    ...(unitSettings.moduloSuprimentos ? [
+      { icon: Package, label: "Suprimentos", href: "/dashboard/materiais" },
+    ] : []),
+    { icon: Zap, label: "Automação (Demo)", href: "/dashboard/automacao" },
+  ];
+
+  // Menu items administrativos (CRM e Financeiro)
+  const adminMenuItems = [
+    ...(unitSettings.moduloCRM ? [
+      { icon: UserCircle, label: "CRM 360º", href: "/admin/clients" },
+    ] : []),
+    ...(unitSettings.moduloFinanceiro ? [
+      { icon: DollarSign, label: "Financeiro", href: "/admin/financeiro" },
+    ] : []),
+  ];
+
+  const allMenuItems = [...baseMenuItems, ...conditionalMenuItems];
+  const hasAdminItems = adminMenuItems.length > 0;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -56,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <nav className="p-4 space-y-2">
           {/* Menu Principal */}
-          {menuItems.map((item) => {
+          {allMenuItems.map((item) => {
             const isActive = location === item.href;
             return (
               <Link key={item.href} href={item.href}>
@@ -73,6 +142,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
+
+          {/* Menu Administrativo (se houver itens) */}
+          {hasAdminItems && (
+            <>
+              <div className="my-4 border-t border-border" />
+              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Administração
+              </div>
+              {adminMenuItems.map((item) => {
+                const isActive = location === item.href;
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <a className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                      ${isActive 
+                        ? "bg-primary/10 text-primary font-medium shadow-sm" 
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }
+                    `}>
+                      <item.icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                      {item.label}
+                    </a>
+                  </Link>
+                );
+              })}
+            </>
+          )}
 
           {/* Separador */}
           <div className="my-4 border-t border-border" />
