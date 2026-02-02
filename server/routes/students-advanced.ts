@@ -100,7 +100,7 @@ router.post('/', async (req: Request, res: Response) => {
         responsavelPhone,
         healthData: healthData || {},
         academicData: academicData || {}
-      },
+      } as any,
       include: { documents: true, class: true }
     });
 
@@ -214,7 +214,7 @@ router.post('/:id/documents', upload.single('file'), async (req: Request, res: R
         fileSize: req.file.size,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
         studentId: id
-      }
+      } as any
     });
 
     res.status(201).json(document);

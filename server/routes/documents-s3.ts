@@ -33,7 +33,7 @@ router.post('/upload', uploadSingleS3, async (req: Request, res: Response) => {
     }
 
     // O multer-s3 adiciona informações extras ao objeto file
-    const s3File = req.file as Express.MulterS3.File;
+    const s3File = req.file as any;
 
     // Criar registro de documento
     const document = await prisma.document.create({
@@ -45,7 +45,7 @@ router.post('/upload', uploadSingleS3, async (req: Request, res: Response) => {
         fileSize: req.file.size,
         studentId: studentId || null,
         employeeId: employeeId || null,
-      },
+      } as any,
     });
 
     res.json({

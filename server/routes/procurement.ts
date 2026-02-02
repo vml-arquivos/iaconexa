@@ -57,7 +57,7 @@ router.post('/import', upload.single('file'), async (req: Request, res: Response
                   quantity: 0, 
                   lastPrice: parseFloat(row.preco) || 0,
                   schoolId: row.schoolId || 'default-school-id'
-                }
+                } as any
               });
               created++;
             }

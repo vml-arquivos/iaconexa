@@ -168,7 +168,7 @@ app.use(errorHandler);
 // INICIALIZAÇÃO DO SERVIDOR
 // ==========================================
 
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 CONEXA Server v1.1 rodando na porta ${PORT}`);
   console.log(`📊 Endpoints disponíveis:`);

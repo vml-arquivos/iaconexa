@@ -92,7 +92,7 @@ router.post('/', async (req: Request, res: Response) => {
         hireDate: hireDate ? new Date(hireDate) : null,
         salary: salary ? parseFloat(salary) : null,
         department
-      },
+      } as any,
       include: { documents: true }
     });
 
@@ -199,7 +199,7 @@ router.post('/:id/documents', upload.single('file'), async (req: Request, res: R
         fileSize: req.file.size,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
         employeeId: id
-      }
+      } as any
     });
 
     res.status(201).json(document);

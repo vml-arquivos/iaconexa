@@ -6,6 +6,8 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: string;
+    schoolId?: string;
+    classId?: string;
   };
 }
 
@@ -59,5 +61,5 @@ export const requireRole = (...roles: string[]) => {
  * Gerar JWT token
  */
 export const generateToken = (payload: any, expiresIn: string = '7d'): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as any);
 };

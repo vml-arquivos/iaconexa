@@ -185,7 +185,7 @@ router.post('/command', async (req: Request, res: Response) => {
         });
         result = {
           name: student?.name,
-          attendance: student?.attendance
+          attendance: (student as any)?.attendance
         };
         break;
 

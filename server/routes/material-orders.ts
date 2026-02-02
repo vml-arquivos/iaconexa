@@ -97,7 +97,7 @@ router.get('/classes/:classId/materials', async (req: Request, res: Response) =>
         data: {
           classId,
           schoolId: classData.schoolId
-        },
+        } as any,
         include: { items: true }
       });
     }
@@ -132,7 +132,7 @@ router.post('/classes/:classId/materials/items', async (req: Request, res: Respo
         data: {
           classId,
           schoolId: classData!.schoolId
-        }
+        } as any
       });
     }
 
@@ -211,7 +211,7 @@ router.post('/suppliers', async (req: Request, res: Response) => {
         contactEmail,
         contactPhone,
         schoolId
-      }
+      } as any
     });
 
     res.status(201).json(supplier);
@@ -264,7 +264,7 @@ router.post('/suppliers/:supplierId/import-prices', upload.single('file'), async
             price: parseFloat(price),
             category,
             supplierId
-          }
+          } as any
         });
 
         createdCount++;
@@ -357,7 +357,7 @@ router.post('/orders', async (req: Request, res: Response) => {
         items: {
           create: processedItems
         }
-      },
+      } as any,
       include: { items: true }
     });
 

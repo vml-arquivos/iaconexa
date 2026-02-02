@@ -54,7 +54,7 @@ router.post('/upload', uploadSingle, async (req: Request, res: Response) => {
         fileSize: req.file.size,
         studentId: studentId || null,
         employeeId: employeeId || null,
-      },
+      } as any,
     });
 
     res.json({
