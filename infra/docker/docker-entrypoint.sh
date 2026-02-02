@@ -12,7 +12,8 @@ echo "🚀 CONEXA - Iniciando Backend..."
 # 1. GERAR PRISMA CLIENT (usando versão correta do pnpm)
 # ========================================
 echo "🔧 Gerando Prisma Client..."
-pnpm exec prisma generate
+cd /app
+pnpm exec prisma generate --schema=./prisma/schema.prisma
 
 # ========================================
 # 2. AGUARDAR POSTGRES ESTAR PRONTO
@@ -45,7 +46,8 @@ echo "✅ PostgreSQL está pronto!"
 # 3. EXECUTAR MIGRATIONS
 # ========================================
 echo "🗄️ Executando migrations..."
-pnpm exec prisma migrate deploy
+cd /app
+pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma
 
 if [ $? -ne 0 ]; then
   echo "❌ ERRO: Falha ao executar migrations"
@@ -72,7 +74,8 @@ if [ "$PRISMA_SEED_ENABLED" = "true" ]; then
   
   if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     echo "🌱 Banco vazio. Populando dados iniciais..."
-    pnpm exec prisma db seed
+    cd /app
+    pnpm exec prisma db seed --schema=./prisma/schema.prisma
     
     if [ $? -ne 0 ]; then
       echo "⚠️ AVISO: Falha ao popular dados iniciais (seed)"
