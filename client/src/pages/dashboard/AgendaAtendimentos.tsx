@@ -1,6 +1,6 @@
 // ========================================
 // SISTEMA CONEXA v1.0
-// Agenda de Atendimentos - Mobile First
+// Agenda de Atendimentos - Com Calendário
 // ========================================
 
 import { useState, useEffect } from 'react';
@@ -13,7 +13,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, Users, FileText, Plus, Save, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarIcon, Clock, Users, FileText, Plus, Save, X, CheckCircle, XCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface Unit {
   id: string;
@@ -39,8 +42,6 @@ interface Appointment {
   attendees: string | null;
   unit: Unit;
   student: Student | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 const appointmentTypeLabels = {
@@ -69,19 +70,21 @@ const statusColors = {
 
 export default function AgendaAtendimentos() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedUnit, setSelectedUnit] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
 
   // Form state
   const [formData, setFormData] = useState({
     title: '',
     scheduledAt: '',
-    type: 'PARENT_MEETING',
+    type: 'PARENT_MEETING' as const,
     studentId: '',
     attendees: '',
   });
@@ -97,9 +100,14 @@ export default function AgendaAtendimentos() {
     }
   }, [selectedUnit]);
 
+  useEffect(() => {
+    if (selectedDate) {
+      filterAppointmentsByDate(selectedDate);
+    }
+  }, [selectedDate, appointments]);
+
   const fetchUnits = async () => {
     try {
-      // Buscar unidades (assumindo endpoint existente)
       const response = await fetch('/api/students');
       const data = await response.json();
       const uniqueUnits = Array.from(
@@ -130,17 +138,26 @@ export default function AgendaAtendimentos() {
 
   const fetchUpcomingAppointments = async (unitId: string) => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/appointments/unit/${unitId}/upcoming?limit=20`);
+      const response = await fetch(`/api/appointments/unit/${unitId}/upcoming?limit=50`);
       const result = await response.json();
       if (result.success) {
         setAppointments(result.data);
       }
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const filterAppointmentsByDate = (date: Date) => {
+    const filtered = appointments.filter((apt) => {
+      const aptDate = new Date(apt.scheduledAt);
+      return (
+        aptDate.getDate() === date.getDate() &&
+        aptDate.getMonth() === date.getMonth() &&
+        aptDate.getFullYear() === date.getFullYear()
+      );
+    });
+    setFilteredAppointments(filtered);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,7 +192,7 @@ export default function AgendaAtendimentos() {
     }
   };
 
-  const handleComplete = async (id: string, meetingMinutes: string) => {
+  const handleSaveMinutes = async (id: string, meetingMinutes: string) => {
     try {
       const response = await fetch(`/api/appointments/${id}/complete`, {
         method: 'PATCH',
@@ -188,12 +205,13 @@ export default function AgendaAtendimentos() {
       if (result.success) {
         setSelectedAppointment(null);
         fetchUpcomingAppointments(selectedUnit);
+        alert('Ata salva e reunião marcada como concluída!');
       } else {
-        alert('Erro ao concluir agendamento: ' + result.error);
+        alert('Erro ao salvar ata: ' + result.error);
       }
     } catch (error) {
-      console.error('Erro ao concluir:', error);
-      alert('Erro ao concluir agendamento');
+      console.error('Erro ao salvar ata:', error);
+      alert('Erro ao salvar ata');
     }
   };
 
@@ -210,7 +228,7 @@ export default function AgendaAtendimentos() {
       if (result.success) {
         fetchUpcomingAppointments(selectedUnit);
       } else {
-        alert('Erro ao cancelar agendamento: ' + result.error);
+        alert('Erro ao cancelar: ' + result.error);
       }
     } catch (error) {
       console.error('Erro ao cancelar:', error);
@@ -229,44 +247,43 @@ export default function AgendaAtendimentos() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return format(new Date(dateString), "HH:mm", { locale: ptBR });
+  };
+
+  const getDatesWithAppointments = () => {
+    return appointments.map((apt) => new Date(apt.scheduledAt));
+  };
+
+  const isPastAppointment = (appointment: Appointment) => {
+    return new Date(appointment.scheduledAt) < new Date();
   };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header Mobile */}
+      {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h1 className="text-xl font-bold text-gray-900">Agenda de Atendimentos</h1>
-              <p className="text-sm text-gray-500">Próximos agendamentos</p>
+              <p className="text-sm text-gray-500">Reuniões e atendimentos</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Novo
+                  Nova Reunião
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Novo Agendamento</DialogTitle>
                   <DialogDescription>
-                    Preencha as informações do atendimento
+                    Agende uma reunião ou atendimento
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -362,7 +379,7 @@ export default function AgendaAtendimentos() {
 
           {/* Seletor de Unidade */}
           <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full mb-3">
               <SelectValue placeholder="Selecione a unidade" />
             </SelectTrigger>
             <SelectContent>
@@ -373,142 +390,244 @@ export default function AgendaAtendimentos() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Toggle View Mode */}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              className="flex-1"
+            >
+              Lista
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === 'calendar' ? 'default' : 'outline'}
+              onClick={() => setViewMode('calendar')}
+              className="flex-1"
+            >
+              Calendário
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Lista de Agendamentos */}
-      <div className="px-4 py-4 space-y-3">
-        {loading ? (
-          <div className="text-center py-8 text-gray-500">Carregando...</div>
-        ) : appointments.length === 0 ? (
-          <Alert>
-            <Calendar className="h-4 w-4" />
-            <AlertDescription>
-              Nenhum agendamento encontrado. Clique em "Novo" para criar.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          appointments.map((appointment) => (
-            <Card key={appointment.id} className="shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <CardTitle className="text-base">{appointment.title}</CardTitle>
-                    <CardDescription className="text-xs mt-1">
-                      {appointment.student && (
-                        <span className="block">{appointment.student.name}</span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <Badge className={statusColors[appointment.status]} variant="secondary">
-                    {statusLabels[appointment.status]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Info Grid */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{formatDate(appointment.scheduledAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">{formatTime(appointment.scheduledAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <FileText className="h-4 w-4 text-gray-400" />
-                    <Badge className={appointmentTypeColors[appointment.type]} variant="secondary">
-                      {appointmentTypeLabels[appointment.type]}
-                    </Badge>
-                  </div>
-                  {appointment.attendees && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">{appointment.attendees}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Ata da Reunião */}
-                {appointment.meetingMinutes && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs font-semibold text-gray-700 mb-1">Ata da Reunião:</p>
-                    <p className="text-sm text-gray-600">{appointment.meetingMinutes}</p>
-                  </div>
-                )}
-
-                {/* Ações */}
-                {appointment.status === 'SCHEDULED' && (
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="flex-1"
-                      onClick={() => setSelectedAppointment(appointment)}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Concluir
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleCancel(appointment.id)}
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+      {/* Conteúdo */}
+      <div className="px-4 py-4">
+        {viewMode === 'calendar' ? (
+          <div className="space-y-4">
+            {/* Calendário */}
+            <Card>
+              <CardContent className="pt-6">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  locale={ptBR}
+                  className="rounded-md border"
+                  modifiers={{
+                    hasAppointment: getDatesWithAppointments(),
+                  }}
+                  modifiersStyles={{
+                    hasAppointment: {
+                      fontWeight: 'bold',
+                      backgroundColor: '#dbeafe',
+                    },
+                  }}
+                />
               </CardContent>
             </Card>
-          ))
+
+            {/* Agendamentos do Dia Selecionado */}
+            {selectedDate && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">
+                  {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                </h3>
+                {filteredAppointments.length === 0 ? (
+                  <Alert>
+                    <CalendarIcon className="h-4 w-4" />
+                    <AlertDescription>
+                      Nenhum agendamento para esta data.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredAppointments.map((appointment) => (
+                      <AppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        onSaveMinutes={handleSaveMinutes}
+                        onCancel={handleCancel}
+                        isPast={isPastAppointment(appointment)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Lista de Agendamentos */
+          <div className="space-y-3">
+            {appointments.length === 0 ? (
+              <Alert>
+                <CalendarIcon className="h-4 w-4" />
+                <AlertDescription>
+                  Nenhum agendamento encontrado. Clique em "Nova Reunião" para criar.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              appointments.map((appointment) => (
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  onSaveMinutes={handleSaveMinutes}
+                  onCancel={handleCancel}
+                  isPast={isPastAppointment(appointment)}
+                />
+              ))
+            )}
+          </div>
         )}
       </div>
-
-      {/* Dialog para Concluir Agendamento */}
-      {selectedAppointment && (
-        <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Concluir Atendimento</DialogTitle>
-              <DialogDescription>{selectedAppointment.title}</DialogDescription>
-            </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const minutes = formData.get('minutes') as string;
-                handleComplete(selectedAppointment.id, minutes);
-              }}
-              className="space-y-4 mt-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="minutes">Ata da Reunião</Label>
-                <Textarea
-                  id="minutes"
-                  name="minutes"
-                  placeholder="Descreva o que foi discutido e as decisões tomadas..."
-                  rows={6}
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Concluir
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectedAppointment(null)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
+  );
+}
+
+// Componente de Card de Agendamento
+function AppointmentCard({
+  appointment,
+  onSaveMinutes,
+  onCancel,
+  isPast,
+}: {
+  appointment: Appointment;
+  onSaveMinutes: (id: string, minutes: string) => void;
+  isPast: boolean;
+}) {
+  const [showMinutesForm, setShowMinutesForm] = useState(false);
+  const [minutes, setMinutes] = useState(appointment.meetingMinutes || '');
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
+  };
+
+  const formatTime = (dateString: string) => {
+    return format(new Date(dateString), "HH:mm", { locale: ptBR });
+  };
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <CardTitle className="text-base">{appointment.title}</CardTitle>
+            <CardDescription className="text-xs mt-1">
+              {appointment.student && (
+                <span className="block">{appointment.student.name}</span>
+              )}
+            </CardDescription>
+          </div>
+          <Badge className={statusColors[appointment.status]} variant="secondary">
+            {statusLabels[appointment.status]}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Info Grid */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarIcon className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">{formatDate(appointment.scheduledAt)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">{formatTime(appointment.scheduledAt)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <FileText className="h-4 w-4 text-gray-400" />
+            <Badge className={appointmentTypeColors[appointment.type]} variant="secondary">
+              {appointmentTypeLabels[appointment.type]}
+            </Badge>
+          </div>
+          {appointment.attendees && (
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-600">{appointment.attendees}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Ata da Reunião */}
+        {appointment.meetingMinutes && !showMinutesForm && (
+          <div className="pt-2 border-t">
+            <p className="text-xs font-semibold text-gray-700 mb-1">Ata da Reunião:</p>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{appointment.meetingMinutes}</p>
+          </div>
+        )}
+
+        {/* Formulário de Ata (para reuniões passadas sem ata) */}
+        {isPast && appointment.status === 'SCHEDULED' && showMinutesForm && (
+          <div className="pt-2 border-t space-y-2">
+            <Label htmlFor={`minutes-${appointment.id}`} className="text-sm font-semibold">
+              Ata da Reunião:
+            </Label>
+            <Textarea
+              id={`minutes-${appointment.id}`}
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value)}
+              placeholder="Descreva o que foi discutido e as decisões tomadas..."
+              rows={4}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  onSaveMinutes(appointment.id, minutes);
+                  setShowMinutesForm(false);
+                }}
+                className="flex-1"
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Salvar Ata
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowMinutesForm(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Ações */}
+        {appointment.status === 'SCHEDULED' && (
+          <div className="flex gap-2 pt-2">
+            {isPast && !showMinutesForm && !appointment.meetingMinutes && (
+              <Button
+                size="sm"
+                variant="default"
+                className="flex-1"
+                onClick={() => setShowMinutesForm(true)}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Preencher Ata
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => onCancel(appointment.id)}
+            >
+              <XCircle className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

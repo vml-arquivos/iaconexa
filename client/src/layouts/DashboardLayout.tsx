@@ -81,6 +81,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ...(unitSettings.moduloDiario ? [
       { icon: FileText, label: "Diário de Bordo", href: "/dashboard/diario-rapido" },
       { icon: ClipboardList, label: "Diário Digital", href: "/dashboard/diario-digital" },
+      { icon: ClipboardList, label: "Diário de Classe", href: "/dashboard/diario-classe" },
       { icon: CalendarCheck, label: "Agenda", href: "/dashboard/agenda-atendimentos" },
     ] : []),
     ...(unitSettings.moduloSuprimentos ? [

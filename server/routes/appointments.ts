@@ -5,9 +5,13 @@
 
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Aplicar authMiddleware em todas as rotas
+router.use(authMiddleware);
 
 /**
  * GET /api/appointments

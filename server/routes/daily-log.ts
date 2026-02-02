@@ -5,9 +5,13 @@
 
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+// Aplicar authMiddleware em todas as rotas
+router.use(authMiddleware);
 
 /**
  * GET /api/daily-log
@@ -165,6 +169,10 @@ router.post('/api/daily-log', async (req: Request, res: Response) => {
       });
     }
 
+    // Lógica de Alerta Automático
+    // Se foodIntake == REJECTED ou mood == CRYING, ativar alerta automaticamente
+    const autoAlert = foodIntake === 'REJECTED' || mood === 'CRYING';
+    
     const log = await prisma.dailyLog.create({
       data: {
         studentId,
@@ -175,7 +183,7 @@ router.post('/api/daily-log', async (req: Request, res: Response) => {
         hygieneStatus,
         mood,
         observations,
-        alertTriggered: alertTriggered || false,
+        alertTriggered: autoAlert || alertTriggered || false,
       },
       include: {
         student: {
@@ -224,6 +232,10 @@ router.put('/api/daily-log/:id', async (req: Request, res: Response) => {
       alertTriggered,
     } = req.body;
 
+    // Lógica de Alerta Automático
+    // Se foodIntake == REJECTED ou mood == CRYING, ativar alerta automaticamente
+    const autoAlert = foodIntake === 'REJECTED' || mood === 'CRYING';
+    
     const log = await prisma.dailyLog.update({
       where: { id },
       data: {
@@ -232,7 +244,7 @@ router.put('/api/daily-log/:id', async (req: Request, res: Response) => {
         hygieneStatus,
         mood,
         observations,
-        alertTriggered,
+        alertTriggered: autoAlert || alertTriggered || false,
       },
       include: {
         student: {

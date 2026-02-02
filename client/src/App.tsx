@@ -19,6 +19,7 @@ import NovaTarefa from "./pages/dashboard/NovaTarefa";
 import CorrecaoTarefa from "./pages/dashboard/CorrecaoTarefa";
 import Configuracoes from "./pages/dashboard/Configuracoes";
 import DiarioDigital from "./pages/dashboard/DiarioDigital";
+import DiarioClasse from "./pages/dashboard/DiarioClasse";
 import AgendaAtendimentos from "./pages/dashboard/AgendaAtendimentos";
 
 // Admin Pages - CRM 360º
@@ -98,6 +99,13 @@ function Router() {
       <Route path="/dashboard/diario-digital">
         <DashboardLayout>
           <DiarioDigital />
+        </DashboardLayout>
+      </Route>
+      
+      {/* Diário de Classe (Mobile Focused) */}
+      <Route path="/dashboard/diario-classe">
+        <DashboardLayout>
+          <DiarioClasse />
         </DashboardLayout>
       </Route>
       
