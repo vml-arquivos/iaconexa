@@ -17,15 +17,18 @@ datasource db {
 
 enum UserRole {
   MATRIZ_ADMIN
-  MATRIZ_COORD
-  MATRIZ_NUTRI
-  MATRIZ_PSYCHO
-  UNIT_DIRECTOR
-  UNIT_COORD
-  UNIT_SECRETARY
-  UNIT_NUTRI
-  TEACHER
-  SUPPORT_STAFF
+  COORDENADOR_GERAL
+  DIRETOR_UNIDADE
+  COORDENADOR_PEDAGOGICO
+  PROFESSOR
+  NUTRICIONISTA
+  PSICOLOGO
+  SECRETARIO
+}
+
+enum UnitType {
+  MATRIZ
+  UNIDADE
 }
 
 enum InventoryCategory {
@@ -83,8 +86,28 @@ model Association {
   email       String?
   schools     School[]
   menus       Menu[]
+  units       Unit[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Unit {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  address       String?
+  phone         String?
+  email         String?
+  type          UnitType @default(UNIDADE)
+  
+  associationId String
+  association   Association @relation(fields: [associationId], references: [id])
+  
+  users         User[]
+  students      Student[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model School {
@@ -116,12 +139,17 @@ model User {
   passwordHash String
   cpf         String?
   phone       String?
-  role        UserRole @default(TEACHER)
+  role        UserRole @default(PROFESSOR)
   isActive    Boolean  @default(true)
+  
+  unitId      String?
+  unit        Unit?    @relation(fields: [unitId], references: [id])
+  
   schoolId    String?
   school      School?  @relation(fields: [schoolId], references: [id])
   classId     String?
   class       Class?   @relation(fields: [classId], references: [id])
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   auditLogs   AuditLog[]
@@ -171,6 +199,9 @@ model Student {
   cpf         String?
   email       String?
   enrollmentId String?
+  
+  unitId      String?
+  unit        Unit?    @relation(fields: [unitId], references: [id])
   
   schoolId    String?  // Fix: Required by agent.ts
   school      School?  @relation(fields: [schoolId], references: [id])
