@@ -23,7 +23,24 @@ import { generalLimiter, loginLimiter, writeLimiter } from '../middleware/rate-l
 import { errorHandler, notFoundHandler } from '../middleware/error-handler.middleware.js';
 
 const app = express();
-const prisma = new PrismaClient();
+
+// Configurar Prisma Client com timeout e logging
+const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
+
+// Testar conexão com o banco ao iniciar
+prisma.$connect()
+  .then(() => console.log('✅ Prisma conectado ao banco de dados'))
+  .catch((error) => {
+    console.error('❌ ERRO ao conectar Prisma:', error);
+    // Não encerra o processo, tenta reconectar automaticamente
+  });
 
 // ==========================================
 // MIDDLEWARES DE SEGURANÇA
@@ -121,60 +138,8 @@ app.use('/api/planning', planningRoutes);
 // ==========================================
 // ROTAS LEGADAS (Compatibilidade)
 // ==========================================
-
-// Rota de Alunos (legado)
-app.get('/api/students', async (req, res) => {
-  try {
-    const students = await prisma.student.findMany({
-      include: {
-        class: true,
-        school: true,
-        documents: true
-      }
-    });
-    res.json(students);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar alunos' });
-  }
-});
-
-// Rota para atualizar aluno
-app.put('/api/students/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const student = await prisma.student.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(student);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao atualizar aluno' });
-  }
-});
-
-// Rota de Estoque
-app.get('/api/inventory', async (req, res) => {
-  try {
-    const inventory = await prisma.inventoryItem.findMany();
-    res.json(inventory);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar estoque' });
-  }
-});
-
-// Rota para atualizar item de estoque
-app.put('/api/inventory/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const item = await prisma.inventoryItem.update({
-      where: { id },
-      data: req.body,
-    });
-    res.json(item);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao atualizar estoque' });
-  }
-});
+// REMOVIDAS: Rotas duplicadas que causavam conflito
+// As rotas /api/students e /api/inventory já estão definidas nos módulos importados
 
 // ==========================================
 // FALLBACK PARA SPA (Produção)
@@ -215,12 +180,43 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✅ Sistema pronto para receber requisições\n`);
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recebido, encerrando gracefully...');
-  server.close(() => {
-    console.log('Servidor encerrado');
-    prisma.$disconnect();
+// ==========================================
+// GRACEFUL SHUTDOWN & ERROR HANDLERS
+// ==========================================
+
+// Handler para erros não capturados (previne crash)
+process.on('uncaughtException', (error) => {
+  console.error('❌ ERRO NÃO CAPTURADO:', error);
+  console.error('Stack:', error.stack);
+  // Não encerra o processo, apenas loga o erro
+  // Em produção, considere enviar para serviço de monitoramento
+});
+
+// Handler para promises rejeitadas sem catch (previne crash)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ PROMISE REJEITADA NÃO TRATADA:', reason);
+  console.error('Promise:', promise);
+  // Não encerra o processo, apenas loga o erro
+});
+
+// Graceful shutdown para SIGTERM (Coolify/Docker)
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM recebido, encerrando gracefully...');
+  server.close(async () => {
+    console.log('✅ Servidor HTTP encerrado');
+    await prisma.$disconnect();
+    console.log('✅ Prisma desconectado');
+    process.exit(0);
+  });
+});
+
+// Graceful shutdown para SIGINT (Ctrl+C)
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT recebido, encerrando gracefully...');
+  server.close(async () => {
+    console.log('✅ Servidor HTTP encerrado');
+    await prisma.$disconnect();
+    console.log('✅ Prisma desconectado');
     process.exit(0);
   });
 });
