@@ -1,16 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserRole } from '@prisma/client';
-
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: UserRole;
-    schoolId?: string;
-    classId?: string;
-  };
-}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me_in_production';
 
@@ -18,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me_in_production
  * Middleware de autenticação JWT
  * Valida o token JWT no header Authorization
  */
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     
@@ -45,7 +34,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
  * Middleware para verificar role específico
  */
 export const requireRole = (...roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
