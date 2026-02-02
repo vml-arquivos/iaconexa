@@ -42,7 +42,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: docker/Dockerfile.backend
       args:
         NODE_ENV: production
     image: conexa-backend:latest
@@ -130,7 +130,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: docker/Dockerfile.frontend
       args:
         VITE_API_URL: ${API_URL:-https://conexa.casadf.com.br/api}
     image: conexa-frontend:latest
