@@ -1,6 +1,11 @@
 # Stage 1: Build
 FROM node:22-alpine as builder
 WORKDIR /app
+
+# Build args para injeção de variáveis no build do Vite
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches/
 RUN npm install -g pnpm && pnpm install

@@ -39,6 +39,12 @@ app.use(writeLimiter);
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Servir frontend estático (produção)
+if (process.env.NODE_ENV === 'production') {
+  const clientPath = path.join(process.cwd(), '..', 'client', 'dist');
+  app.use(express.static(clientPath));
+}
+
 // ==========================================
 // ROTAS DE SAÚDE
 // ==========================================
@@ -141,6 +147,16 @@ app.put('/api/inventory/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar estoque' });
   }
 });
+
+// ==========================================
+// FALLBACK PARA SPA (Produção)
+// ==========================================
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    const clientPath = path.join(process.cwd(), '..', 'client', 'dist', 'index.html');
+    res.sendFile(clientPath);
+  });
+}
 
 // ==========================================
 // TRATAMENTO DE ERROS

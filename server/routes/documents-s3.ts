@@ -1,34 +1,26 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { uploadSingle, getFileUrl, getFileKey } from '../config/storage.js';
+import { uploadSingleS3, getPublicUrl } from '../middleware/upload-s3.js';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import path from 'path';
-import fs from 'fs';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local';
-
-// Cliente S3 para operações de deleção (apenas se usar S3)
-let s3Client: S3Client | null = null;
-
-if (STORAGE_TYPE === 's3') {
-  s3Client = new S3Client({
-    region: process.env.BUCKET_REGION || 'auto',
-    endpoint: process.env.S3_ENDPOINT || undefined,
-    credentials: {
-      accessKeyId: process.env.ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.SECRET_ACCESS_KEY || '',
-    },
-    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
-  });
-}
+// Cliente S3 para operações de deleção
+const s3Client = new S3Client({
+  region: process.env.S3_REGION || 'auto',
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+  },
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+});
 
 // ========================================
-// POST /api/documents/upload - Upload de documento
+// POST /api/documents/upload - Upload de documento para S3
 // ========================================
-router.post('/upload', uploadSingle, async (req: Request, res: Response) => {
+router.post('/upload', uploadSingleS3, async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -40,17 +32,16 @@ router.post('/upload', uploadSingle, async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing type or studentId/employeeId' });
     }
 
-    // Obter URL e chave do arquivo (compatível com S3 e local)
-    const fileUrl = getFileUrl(req.file);
-    const fileKey = getFileKey(req.file);
+    // O multer-s3 adiciona informações extras ao objeto file
+    const s3File = req.file as Express.MulterS3.File;
 
     // Criar registro de documento
     const document = await prisma.document.create({
       data: {
         type,
         filename: req.file.originalname,
-        url: fileUrl,
-        fileKey: fileKey,
+        url: s3File.location, // URL pública do S3
+        fileKey: s3File.key,   // Chave do arquivo no S3 (para deleção)
         fileSize: req.file.size,
         studentId: studentId || null,
         employeeId: employeeId || null,
@@ -108,7 +99,7 @@ router.get('/employee/:employeeId', async (req: Request, res: Response) => {
 });
 
 // ========================================
-// DELETE /api/documents/:documentId - Deletar documento
+// DELETE /api/documents/:documentId - Deletar documento do S3
 // ========================================
 router.delete('/:documentId', async (req: Request, res: Response) => {
   try {
@@ -122,21 +113,14 @@ router.delete('/:documentId', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Documento não encontrado' });
     }
 
-    // Deletar arquivo físico
-    if (STORAGE_TYPE === 's3' && document.fileKey && s3Client) {
-      // Deletar do S3
+    // Deletar arquivo do S3 usando a fileKey
+    if (document.fileKey) {
       const deleteCommand = new DeleteObjectCommand({
-        Bucket: process.env.BUCKET_NAME || 'conexa-uploads',
+        Bucket: process.env.S3_BUCKET_NAME || 'conexa-uploads',
         Key: document.fileKey,
       });
 
       await s3Client.send(deleteCommand);
-    } else if (STORAGE_TYPE === 'local') {
-      // Deletar do disco local
-      const filePath = path.join(process.cwd(), 'uploads', path.basename(document.url));
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
     }
 
     // Deletar registro do banco
