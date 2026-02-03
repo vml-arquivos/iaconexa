@@ -50,8 +50,9 @@ cd /app
 
 # Auto-Heal: Destravar migration presa (se houver)
 echo "🚑 [AUTO-HEAL] Tentando destravar migração presa..."
-# Tenta marcar a migração problemática como 'revertida' para tentar de novo
+# Tenta marcar as migrações problemáticas conhecidas como 'revertidas' para destravar o banco
 pnpm exec prisma migrate resolve --rolled-back "20260202000000_multi_unit_structure_and_hierarchical_roles" || true
+pnpm exec prisma migrate resolve --rolled-back "20260202105158_update_roles_strict_access" || true
 
 pnpm exec prisma migrate deploy --schema=./prisma/schema.prisma
 
