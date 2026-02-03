@@ -28,7 +28,7 @@ router.get('/upcoming', async (req, res) => {
     // If unitId is provided, filter by unit
     if (unitId) {
       where.unitId = unitId as string;
-    } else if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(userRole)) {
+    } else if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(userRole)) {
       // Non-strategic users can only see their unit's meetings
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -132,7 +132,7 @@ router.post('/topics/suggest', async (req, res) => {
       select: { unitId: true, role: true },
     });
     
-    if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user?.role || '') && 
+    if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user?.role || '') && 
         user?.unitId !== meeting.unitId) {
       return res.status(403).json({ error: 'You can only suggest topics for your unit meetings' });
     }
@@ -167,7 +167,7 @@ router.post('/topics/suggest', async (req, res) => {
 // POST /meetings/start
 // O Coordenador ou Anfitrião inicia a reunião (transforma tópicos em pauta oficial)
 // ==========================================
-router.post('/start', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GESTOR_REDE', 'ADMIN_MATRIZ']), async (req, res) => {
+router.post('/start', rbacMiddleware(['COORDENADOR_PEDAGOGICO', 'DIRETOR_UNIDADE', 'COORDENADOR_GERAL', 'MATRIZ_ADMIN']), async (req, res) => {
   try {
     const { meetingId, approvedTopicIds } = req.body;
     const userId = (req as any).user.id;
@@ -197,9 +197,9 @@ router.post('/start', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GE
     });
     
     const isHost = meeting.hostId === userId;
-    const isStrategic = ['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user?.role || '');
+    const isStrategic = ['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user?.role || '');
     const isSameUnit = user?.unitId === meeting.unitId;
-    const isCoordinator = ['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE'].includes(user?.role || '');
+    const isCoordinator = ['COORDENADOR_PEDAGOGICO', 'DIRETOR_UNIDADE'].includes(user?.role || '');
     
     if (!isHost && !isStrategic && !(isSameUnit && isCoordinator)) {
       return res.status(403).json({ error: 'Only the host or coordinators can start the meeting' });
@@ -254,7 +254,7 @@ router.post('/start', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GE
 // POST /meetings/finalize
 // Fecha a reunião, salva a Ata e dispara as Tarefas (Action Items)
 // ==========================================
-router.post('/finalize', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GESTOR_REDE', 'ADMIN_MATRIZ']), async (req, res) => {
+router.post('/finalize', rbacMiddleware(['COORDENADOR_PEDAGOGICO', 'DIRETOR_UNIDADE', 'COORDENADOR_GERAL', 'MATRIZ_ADMIN']), async (req, res) => {
   try {
     const { meetingId, minutes, actionItems, discussedTopicIds, deferredTopicIds } = req.body;
     const userId = (req as any).user.id;
@@ -283,9 +283,9 @@ router.post('/finalize', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 
     });
     
     const isHost = meeting.hostId === userId;
-    const isStrategic = ['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user?.role || '');
+    const isStrategic = ['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user?.role || '');
     const isSameUnit = user?.unitId === meeting.unitId;
-    const isCoordinator = ['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE'].includes(user?.role || '');
+    const isCoordinator = ['COORDENADOR_PEDAGOGICO', 'DIRETOR_UNIDADE'].includes(user?.role || '');
     
     if (!isHost && !isStrategic && !(isSameUnit && isCoordinator)) {
       return res.status(403).json({ error: 'Only the host or coordinators can finalize the meeting' });
@@ -387,7 +387,7 @@ router.post('/finalize', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 
 // GET /meetings/general
 // Rota exclusiva para ADMIN_MATRIZ e GESTOR_REDE verem todas as atas
 // ==========================================
-router.get('/general', rbacMiddleware(['ADMIN_MATRIZ', 'GESTOR_REDE']), async (req, res) => {
+router.get('/general', rbacMiddleware(['MATRIZ_ADMIN', 'COORDENADOR_GERAL']), async (req, res) => {
   try {
     const { type, keyword, startDate, endDate } = req.query;
     
@@ -524,7 +524,7 @@ router.get('/:id', async (req, res) => {
     }
     
     // Check permission
-    if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(userRole)) {
+    if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(userRole)) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { unitId: true },
@@ -546,7 +546,7 @@ router.get('/:id', async (req, res) => {
 // POST /meetings
 // Create new meeting
 // ==========================================
-router.post('/', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GESTOR_REDE', 'ADMIN_MATRIZ']), async (req, res) => {
+router.post('/', rbacMiddleware(['COORDENADOR_PEDAGOGICO', 'DIRETOR_UNIDADE', 'COORDENADOR_GERAL', 'MATRIZ_ADMIN']), async (req, res) => {
   try {
     const { unitId, hostId, date, type, title } = req.body;
     const userId = (req as any).user.id;
@@ -557,7 +557,7 @@ router.post('/', rbacMiddleware(['COORD_PEDAGOGICO', 'DIRETOR_UNIDADE', 'GESTOR_
     }
     
     // Verify permission
-    if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(userRole)) {
+    if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(userRole)) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { unitId: true },

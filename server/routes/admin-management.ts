@@ -26,7 +26,7 @@ router.get('/employees', async (req: Request, res: Response) => {
     const where: any = {};
     
     // If not strategic level, filter by unit
-    if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user.role)) {
+    if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user.role)) {
       where.unitId = user.unitId;
     }
     
@@ -75,8 +75,8 @@ router.post('/employees', rbacMiddleware('employee' as any, 'WRITE' as any), asy
     }
     
     // SECURITY RULE: Prevent non-strategic users from creating strategic roles
-    if (!['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user.role)) {
-      if (['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(role)) {
+    if (!['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user.role)) {
+      if (['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(role)) {
         return res.status(403).json({ 
           error: 'Forbidden: You cannot create users with strategic roles (ADMIN_MATRIZ, GESTOR_REDE)' 
         });
@@ -141,8 +141,8 @@ router.put('/employees/:id', rbacMiddleware('employee' as any, 'WRITE' as any), 
     }
     
     // SECURITY: Prevent changing role to strategic if user is not strategic
-    if (role && !['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(user.role)) {
-      if (['ADMIN_MATRIZ', 'GESTOR_REDE'].includes(role)) {
+    if (role && !['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(user.role)) {
+      if (['MATRIZ_ADMIN', 'COORDENADOR_GERAL'].includes(role)) {
         return res.status(403).json({ 
           error: 'Forbidden: You cannot assign strategic roles' 
         });
@@ -481,7 +481,7 @@ router.put('/observations/:id', rbacMiddleware('observation' as any, 'WRITE' as 
     }
     
     // Only author or admin can edit
-    if (observation.authorId !== user.id && !['ADMIN_MATRIZ', 'GESTOR_REDE', 'DIRETOR_UNIDADE'].includes(user.role)) {
+    if (observation.authorId !== user.id && !['MATRIZ_ADMIN', 'COORDENADOR_GERAL', 'DIRETOR_UNIDADE'].includes(user.role)) {
       return res.status(403).json({ error: 'Forbidden: You can only edit your own observations' });
     }
     
@@ -528,7 +528,7 @@ router.delete('/observations/:id', rbacMiddleware('observation' as any, 'WRITE' 
     }
     
     // Only author or admin can delete
-    if (observation.authorId !== user.id && !['ADMIN_MATRIZ', 'GESTOR_REDE', 'DIRETOR_UNIDADE'].includes(user.role)) {
+    if (observation.authorId !== user.id && !['MATRIZ_ADMIN', 'COORDENADOR_GERAL', 'DIRETOR_UNIDADE'].includes(user.role)) {
       return res.status(403).json({ error: 'Forbidden: You can only delete your own observations' });
     }
     
